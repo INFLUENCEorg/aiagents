@@ -1,4 +1,4 @@
-from sumoai.AgentComponent import AgentComponent
+from aiagents.AgentComponent import AgentComponent
 import random
 
 class RandomAgent(AgentComponent):
