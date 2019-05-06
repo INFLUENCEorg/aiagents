@@ -1,15 +1,15 @@
 from aiagents.AgentComponent import AgentComponent
-import random
+from gym.spaces import Discrete
+import logging
 
 class RandomAgent(AgentComponent):
     """
     A simple agent component represents a single agent
     This implementation selects random actions
     """
-    def __init__(self, agentId, actionScope, verbose=False):
-        self._agentId=agentId
-        self._actionScope=actionScope
-        self._verbose=verbose
+    def __init__(self, agentId, actionSpace:Discrete):
+        self._agentId = agentId
+        self._actionSpace = actionSpace
 
     def observe(self, state):
         """
@@ -22,10 +22,9 @@ class RandomAgent(AgentComponent):
         Selects just a single random action, wraps in a single element agentId:actionId dictionary
         """
         actions = dict()
-        actions.update({self._agentId: random.choice(self._actionScope)})
+        actions.update({self._agentId: self._actionSpace.sample()})
 
-        if( self._verbose ):
-            print("Id / action:" + str(actions))
+        logging.debug("Id / action:" + str(actions))
 
         return actions
 

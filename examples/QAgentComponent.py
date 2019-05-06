@@ -2,6 +2,7 @@ from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
 from aiagents.single.RandomAgent import RandomAgent
 from aiagents.QAgentComponent import QAgentComponent
 import random
+from gym.spaces import Discrete
 
 class RandomQAgent(RandomAgent, QAgentComponent):
     """
@@ -28,20 +29,24 @@ class RandomQAgent(RandomAgent, QAgentComponent):
         We select action that maximizes Q
         """
         q_dict=dict()
-        for action in self._actionScope:
-            q_dict.update({action: self.getQ(self._observation,action)})
+        actionId = 0
+    
+        while self._actionSpace.contains(actionId):
+            q_dict.update({actionId: self.getQ(self._observation,actionId)})
+            actionId+=1
+            print(actionId)
         return {self._agentId: max(q_dict, key=q_dict.get)}
 
 def main():
 
     N_agents=10
     i=0
-    scope=[1,2,3]
+    action_space=Discrete(3)
     simpleComponentList=[]
     verbose=True
 
     while( i < N_agents ):
-        simpleComponentList.append(RandomQAgent(i, scope, verbose))
+        simpleComponentList.append(RandomQAgent(i, action_space))
         i+=1
 
     myComplexComponent=ComplexAgentComponent(simpleComponentList, verbose)

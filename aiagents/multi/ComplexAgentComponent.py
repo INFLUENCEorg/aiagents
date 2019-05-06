@@ -1,4 +1,5 @@
 from aiagents.AgentComponent import AgentComponent
+import logging
 
 class ComplexAgentComponent(AgentComponent):
     """
@@ -7,9 +8,8 @@ class ComplexAgentComponent(AgentComponent):
     The subcomponents should be disjoint otherwise actions get overwritten 
     """
 
-    def __init__(self, agentComponentList, verbose=False):
+    def __init__(self, agentComponentList):
         self._agentSubcomponents=agentComponentList
-        self._verbose=verbose
 
     def observe(self, state):
         """
@@ -27,8 +27,7 @@ class ComplexAgentComponent(AgentComponent):
         for agentComponent in self._agentSubcomponents:
             actions.update(agentComponent.select_actions())
 
-        if( self._verbose ):
-            print("Aggregate actions:" + str(actions))
+        logging.debug("Aggregate actions:" + str(actions))
 
         return actions
 
