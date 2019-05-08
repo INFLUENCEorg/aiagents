@@ -1,4 +1,13 @@
-To run the scripts in the examples directory,
-add the directory where you cloned your repository to your PYTHONPATH.
+# aiagents
+Repository for Influence project agents
 
-Installation instructions via pip3 will be provided later.
+### Build the library ###
+To build the library, you need to have version 40.6.2 or later of setuptools, plus wheel. To ensure, run
+```
+pip3 install --upgrade setuptools
+pip3 install wheel
+```
+With that, you can build the library build using
+```
+./build.sh
+(or sudo ./build.sh depending on your user privileges)

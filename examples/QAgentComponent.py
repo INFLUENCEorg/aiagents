@@ -3,6 +3,11 @@ from aiagents.single.RandomAgent import RandomAgent
 from aiagents.QAgentComponent import QAgentComponent
 import random
 from gym.spaces import Discrete
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 class RandomQAgent(RandomAgent, QAgentComponent):
     """
@@ -34,7 +39,7 @@ class RandomQAgent(RandomAgent, QAgentComponent):
         while self._actionSpace.contains(actionId):
             q_dict.update({actionId: self.getQ(self._observation,actionId)})
             actionId+=1
-            print(actionId)
+            logging.debug("ACTION: " + str(actionId))
         return {self._agentId: max(q_dict, key=q_dict.get)}
 
 def main():
@@ -43,13 +48,12 @@ def main():
     i=0
     action_space=Discrete(3)
     simpleComponentList=[]
-    verbose=True
 
     while( i < N_agents ):
         simpleComponentList.append(RandomQAgent(i, action_space))
         i+=1
 
-    myComplexComponent=ComplexAgentComponent(simpleComponentList, verbose)
+    myComplexComponent=ComplexAgentComponent(simpleComponentList)
 
     N_steps=6
     i=0
