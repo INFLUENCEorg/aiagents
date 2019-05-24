@@ -11,12 +11,12 @@ class ComplexAgentComponent(AgentComponent):
     def __init__(self, agentComponentList):
         self._agentSubcomponents=agentComponentList
 
-    def observe(self, state):
+    def observe(self, state, reward=None, done=None):
         """
         Loops over agent components, all agent components observe the state
         """
         for agentComponent in self._agentSubcomponents:
-            agentComponent.observe(state)
+            agentComponent.observe(state, reward, done)
 
     def select_actions(self):
         """

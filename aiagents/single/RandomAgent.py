@@ -11,7 +11,7 @@ class RandomAgent(AgentComponent):
         self._agentId = agentId
         self._actionSpace = actionSpace
 
-    def observe(self, state):
+    def observe(self, state, reward=None, done=None):
         """
         We assume that we can observe the whole state
         """

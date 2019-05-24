@@ -8,7 +8,7 @@ setup(name='aiagents',
       author='Influence TEAM',
       author_email='author@example.com',
       license='Example',
-      packages=['aiagents', 'aiagents/single', 'aiagents/multi'],
+      packages=['aiagents', 'aiagents/single', 'aiagents/single/PPO', 'aiagents/multi'],
       classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
