@@ -30,7 +30,7 @@ class Model(object):
         """
         with self.graph.as_default():
             file_name = os.path.join('models', self.parameters['name'],
-                                     'factor'+str(self.factor_idx), 'network')
+                                     'factor'+str(0), 'network')
             print("Saving networks...")
             self.saver.save(self.sess, file_name, time_step)
             print("Saved!")
@@ -42,7 +42,7 @@ class Model(object):
         with self.graph.as_default():
             self.saver = tf.train.Saver()
             checkpoint_dir = os.path.join('models', self.parameters['name'],
-                                          'factor'+str(self.factor_idx))
+                                          'factor'+str(0))
             ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
             self.saver.restore(self.sess, ckpt.model_checkpoint_path)
 

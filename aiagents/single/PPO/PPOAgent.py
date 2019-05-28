@@ -34,7 +34,7 @@ class PPOAgent(Controller, AgentComponent):
                 self._update()
             if self._step % self._save_frequency == 0:
                 # Tensorflow only stores a limited number of networks.
-                self.save_graph(step)
+                self._save_graph(self._step)
             self.write_summary()
 
         self._step_output = next_step_output
@@ -73,11 +73,11 @@ class PPOAgent(Controller, AgentComponent):
         super().__init__(self._parameters, action_space)
         self._t = 0
         if self._parameters['influence']:
-            self.seq_len = self._parameters['inf_seq_len']
+            self._seq_len = self._parameters['inf_seq_len']
         elif self._parameters['recurrent']:
-            self.seq_len = self._parameters['seq_len']
+            self._seq_len = self._parameters['seq_len']
         else:
-            self.seq_len = 1
+            self._seq_len = 1
 
 
     ############# PRIVATE METHODS ####################
@@ -101,6 +101,7 @@ class PPOAgent(Controller, AgentComponent):
         # padding incomplete sequences
         self._replay_memory['masks'].append(1)
         self._cumulative_rewards += next_step_output['reward']
+        logging.debug("Cumulative reward"+str(self._cumulative_rewards))
         self._stats['value'].append(get_actions_output['value'][0])
         self._stats['entropy'].append(get_actions_output['entropy'])
         self._stats['learning_rate'].append(get_actions_output['learning_rate'])
@@ -123,9 +124,9 @@ class PPOAgent(Controller, AgentComponent):
             self._stats['episode_length'].append(episode_step)
             self._cumulative_rewards = 0
             # zero padding incomplete sequences
-            remainder = len(self._replay_memory['masks']) % self.seq_len
+            remainder = len(self._replay_memory['masks']) % self._seq_len
             if remainder != 0:
-                missing = self.seq_len - remainder
+                missing = self._seq_len - remainder
                 self._replay_memory.zero_padding(missing)
                 self._t += missing
 
@@ -151,7 +152,7 @@ class PPOAgent(Controller, AgentComponent):
                                                  self._parameters['gamma'],
                                                  self._parameters['lambda'])
             self._replay_memory['advantages'].extend(advantages)
-            returns = advantages + batch['values']
+            returns = advantages + np.reshape(batch['values'],-1)
             self._replay_memory['returns'].extend(returns)
             self._t = 0
 
@@ -162,11 +163,11 @@ class PPOAgent(Controller, AgentComponent):
         """
         import time
         start = time.time()
-        logging.debug(len(self._replay_memory[0]['returns']))
-        logging.debug(len(self._replay_memory[0]['masks']))
+        logging.debug(len(self._replay_memory['returns']))
+        logging.debug(len(self._replay_memory['masks']))
         policy_loss = 0
         value_loss = 0
-        n_sequences = self._parameters['batch_size'] // self.seq_len
+        n_sequences = self._parameters['batch_size'] // self._seq_len
         n_batches = self._parameters['memory_size'] // self._parameters['batch_size']
         for e in range(self._parameters['num_epoch']):
             self._replay_memory.shuffle()

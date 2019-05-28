@@ -31,6 +31,8 @@ class Controller(object):
             os.makedirs(summary_path)
         self._summary_writer = tf.summary.FileWriter(summary_path)
 
+    ########### PRIVATE METHODS ####################
+
     def _get_actions(self, step_output, ip=None):
         """
         Get each factor's action based on its local observation. Append the given
@@ -48,7 +50,7 @@ class Controller(object):
         """
         # TODO: add coordination algorithms
         global_action = []
-        i_index = self.epsilon_greedy([Q], 1.0)
+        i_index = self._epsilon_greedy([Q], 1.0)
         global_action.append(i_index)
         print(("Global action: {}".format(global_action)))
         return global_action
@@ -77,7 +79,7 @@ class Controller(object):
         """
         return self._replay_memory.full()
 
-    def reset(self):
+    def _reset(self):
         """
         Reset the Q-functions. This is necessary for Recurrent Neural Networks.
         """
@@ -86,7 +88,7 @@ class Controller(object):
 
         self._model.reset()
 
-    def save_graph(self, time_step):
+    def _save_graph(self, time_step):
         """
         Store all the networks and replay memories.
         """
@@ -97,7 +99,7 @@ class Controller(object):
         self._model.save_graph(time_step)
 
     # TODO: replay memory
-    def store_memory(self, path):
+    def _store_memory(self, path):
         # Create factor path if it does not exist.
         factor_path = os.path.join(os.environ['APPROXIMATOR_HOME'], path)
         if not os.path.exists(factor_path):
@@ -117,11 +119,11 @@ class Controller(object):
            self._parameters['tensorboard']:
 
             summary = tf.Summary()
-            for key in self.stats.keys():
-                if len(self.stats[key]) > 0:
-                    stat_mean = float(np.mean(self.stats[key]))
+            for key in self._stats.keys():
+                if len(self._stats[key]) > 0:
+                    stat_mean = float(np.mean(self._stats[key]))
                     #self._logger.log_scalar(key, stat_mean, self._step)
                     summary.value.add(tag='{}'.format(key), simple_value=stat_mean)
-                    self.stats[key] = []
-            self._summary_writer.add_summary(summary, self.step)
+                    self._stats[key] = []
+            self._summary_writer.add_summary(summary, self._step)
             self._summary_writer.flush()
