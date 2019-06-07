@@ -101,7 +101,7 @@ class PPOAgent(Controller, AgentComponent):
         # padding incomplete sequences
         self._replay_memory['masks'].append(1)
         self._cumulative_rewards += next_step_output['reward']
-        logging.debug("Cumulative reward"+str(self._cumulative_rewards))
+        logging.debug("Cumulative reward"+str(self._cumulative_rewards)+ " reward" + str(next_step_output['reward']))
         self._stats['value'].append(get_actions_output['value'][0])
         self._stats['entropy'].append(get_actions_output['entropy'])
         self._stats['learning_rate'].append(get_actions_output['learning_rate'])
