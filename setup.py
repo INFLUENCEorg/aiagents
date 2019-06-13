@@ -14,5 +14,6 @@ setup(name='aiagents',
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=[]
+    install_requires=['absl-py', 'astor', 'atari-py', 'certifi', 'chardet', 'cycler', 'future', 'gast', 'grpcio', 'gym', 'h5py', 'idna', 'Keras-Applications', 'Keras-Preprocessing', 'kiwisolver', 'Markdown', 'matplotlib', 'mock', 'numpy', 'pkg-resources', 'protobuf', 'pyglet', 'pyparsing', 'python-dateutil', 'PyYAML', 'requests', 'scipy', 'six', 'tensorboard', 'tensorflow', 'tensorflow-estimator', 'termcolor', 'urllib3', 'Werkzeug'
+        ]
 )
