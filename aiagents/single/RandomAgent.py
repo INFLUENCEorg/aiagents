@@ -1,13 +1,15 @@
 from aiagents.AgentComponent import AgentComponent
-from gym.spaces import Discrete
+from aiagents.FixedActionsSpace import FixedActionsSpace
 import logging
+
 
 class RandomAgent(AgentComponent):
     """
     A simple agent component represents a single agent
     This implementation selects random actions
     """
-    def __init__(self, agentId, actionSpace:Discrete):
+
+    def __init__(self, agentId, actionSpace:FixedActionsSpace):
         self._agentId = agentId
         self._actionSpace = actionSpace
 
@@ -15,7 +17,7 @@ class RandomAgent(AgentComponent):
         """
         We assume that we can observe the whole state
         """
-        self._observation=state
+        self._observation = state
 
     def select_actions(self):
         """
