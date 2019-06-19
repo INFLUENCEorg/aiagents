@@ -8,7 +8,7 @@ import logging
 
 class PPOAgent(Controller, AgentComponent):
 
-    def observe(self, observation, reward, done):
+    def step(self, observation, reward, done):
         new_state = np.zeros((1, self._parameters['frame_height'],
                               self._parameters['frame_width'],
                               self._parameters['num_frames']))
@@ -38,8 +38,6 @@ class PPOAgent(Controller, AgentComponent):
             self.write_summary()
 
         self._step_output = next_step_output
-
-    def select_actions(self):
         action=self._get_actions(self._step_output)
         self._prev_action=action.get('action')[0]
         return {self._controller_id: action['action'][0][0]}

@@ -29,7 +29,7 @@ class RandomQAgent(RandomAgent, QAgentComponent):
             q_list.append(self.getQ(state,action))
         return max(q_list)
 
-    def select_actions(self):
+    def step(self, observation, reward, done):
         """
         We select action that maximizes Q
         """
@@ -37,7 +37,7 @@ class RandomQAgent(RandomAgent, QAgentComponent):
         actionId = 0
     
         while self._actionSpace.contains(actionId):
-            q_dict.update({actionId: self.getQ(self._observation,actionId)})
+            q_dict.update({actionId: self.getQ(observation,actionId)})
             actionId+=1
             logging.debug("ACTION: " + str(actionId))
         return {self._agentId: max(q_dict, key=q_dict.get)}
@@ -62,8 +62,7 @@ def main():
     while i<N_steps:
         state = (state+1) % 4
         print("State = " + str(state))
-        myComplexComponent.observe(state)
-        myComplexComponent.select_actions()
+        myComplexComponent.step(state)
         i+=1
     return 0
   

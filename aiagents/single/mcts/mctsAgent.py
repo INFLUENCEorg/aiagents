@@ -56,14 +56,13 @@ class mctsAgent():
         self._simulator = copy.deepcopy(environment)
         self._agentId = agentId
 
-    def observe(self, observation, reward, done):
+    def step(self, observation, reward, done):
         self._simulator.setState(copy.deepcopy(observation))
         self._isRootTerminal = done
 
-    def select_actions(self):
         self._root = treeNode(state=self._simulator.getState(), reward=0, done=self._isRootTerminal, parent=None)
         if self._isRootTerminal:
-               return {self._agentId: self._simulator.action_space.spaces.get(self._agentId).sample()}
+            return {self._agentId: self._simulator.action_space.spaces.get(self._agentId).sample()}
 
         if self._limitType == 'time':
             timeLimit = time.time() + self._timeLimit / 1000

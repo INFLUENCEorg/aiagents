@@ -13,13 +13,7 @@ class RandomAgent(AgentComponent):
         self._agentId = agentId
         self._actionSpace = actionSpace
 
-    def observe(self, state, reward=None, done=None):
-        """
-        We assume that we can observe the whole state
-        """
-        self._observation = state
-
-    def select_actions(self):
+    def step(self, state, reward=None, done=None):
         """
         Selects just a single random action, wraps in a single element agentId:actionId dictionary
         """

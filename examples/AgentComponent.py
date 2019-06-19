@@ -24,8 +24,7 @@ def main():
     state=0
 
     while i<N_steps:
-        myComplexComponent.observe(state)
-        myComplexComponent.select_actions()
+        myComplexComponent.step(state)
         i+=1
     return 0
   
