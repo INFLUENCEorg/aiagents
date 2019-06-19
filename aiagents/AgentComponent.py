@@ -9,9 +9,9 @@ class AgentComponent(ABC):
     but if they do, this can be handled within observing the state
     """
     @abstractmethod
-    def step(self, state, reward:float=None, done:bool=None) -> spaces.Dict:
+    def step(self, observation=None, reward:float=None, done:bool=None) -> spaces.Dict:
         """
-        should return a dictionary of ids and actions
+        should return a dictionary of controller ids and respective actions
         """
         pass
 
