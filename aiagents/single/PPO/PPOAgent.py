@@ -2,11 +2,49 @@ from aiagents.single.PPO.controller import Controller
 from aiagents.single.PPO.PPOmodel import PPOmodel
 from aiagents.single.PPO.replay_memory import SerialSampling
 import numpy as np
-from aiagents.AgentComponent import AgentComponent
+from aiagents.single.AtomicAgent import AtomicAgent
+from aienvs.Environment import Env
 import logging
 
 
-class PPOAgent(Controller, AgentComponent):
+class PPOAgent(Controller, AtomicAgent):
+
+    def __init__(self, agentId, environment:Env, parameters):
+        AtomicAgent.__init__(self, agentId, environment, parameters)
+        self._num_actions = {}
+        self._prev_state = None
+        self._observation_space = environment.observation_space
+        #TODO: change to self._step_output = dict({"obs": observation_space.sample(), "reward": None, "done": None, "prev_action": None})
+        self._step_output = dict({"obs": None, "reward": None, "done": None, "prev_action": None})
+        self._prev_action = [-1]
+        self._parameters = parameters
+        self._num_actions = environment.action_space.spaces.get(agentId).n
+        self._train_frequency = self._parameters['train_frequency']
+        self._save_frequency = self._parameters['save_frequency']
+        self._agentId = agentId
+        self._model = {}
+        self._replay_memory = {}
+        self._cumulative_rewards = {}
+        self._stats = {}
+        self._model = PPOmodel(self._parameters, self._num_actions)
+        self._replay_memory = SerialSampling(self._parameters, self._num_actions)
+        self._cumulative_rewards = 0
+        self._stats = {"cumulative_rewards": [],
+                        "episode_length": [],
+                        "value": [],
+                        "learning_rate": [],
+                        "entropy": [],
+                        "policy_loss": [],
+                        "value_loss": []}
+        Controller.__init__(self, self._parameters, environment.action_space.spaces.get(agentId))
+        self._t = 0
+        if self._parameters['influence']:
+            self._seq_len = self._parameters['inf_seq_len']
+        elif self._parameters['recurrent']:
+            self._seq_len = self._parameters['seq_len']
+        else:
+            self._seq_len = 1
+
 
     def step(self, observation, reward, done):
         new_state = np.zeros((1, self._parameters['frame_height'],
@@ -40,43 +78,7 @@ class PPOAgent(Controller, AgentComponent):
         self._step_output = next_step_output
         action=self._get_actions(self._step_output)
         self._prev_action=action.get('action')[0]
-        return {self._controller_id: action['action'][0][0]}
-
-    def __init__(self, parameters, observation_space, action_space, controller_id=0, logger=None):
-        self._num_actions = {}
-        self._prev_state = None
-        self._observation_space = observation_space
-        #TODO: change to self._step_output = dict({"obs": observation_space.sample(), "reward": None, "done": None, "prev_action": None})
-        self._step_output = dict({"obs": None, "reward": None, "done": None, "prev_action": None})
-        self._prev_action = [-1]
-        self._parameters = parameters
-        self._num_actions = action_space.n
-        self._train_frequency = self._parameters['train_frequency']
-        self._save_frequency = self._parameters['save_frequency']
-        self._controller_id = controller_id
-        self._model = {}
-        self._replay_memory = {}
-        self._cumulative_rewards = {}
-        self._stats = {}
-        self._model = PPOmodel(self._parameters, self._num_actions)
-        self._replay_memory = SerialSampling(self._parameters, self._num_actions)
-        self._cumulative_rewards = 0
-        self._stats = {"cumulative_rewards": [],
-                        "episode_length": [],
-                        "value": [],
-                        "learning_rate": [],
-                        "entropy": [],
-                        "policy_loss": [],
-                        "value_loss": []}
-        super().__init__(self._parameters, action_space)
-        self._t = 0
-        if self._parameters['influence']:
-            self._seq_len = self._parameters['inf_seq_len']
-        elif self._parameters['recurrent']:
-            self._seq_len = self._parameters['seq_len']
-        else:
-            self._seq_len = 1
-
+        return {self._agentId: action['action'][0][0]}
 
     ############# PRIVATE METHODS ####################
 

@@ -1,0 +1,13 @@
+from aienvs.Environment import Env
+from aiagents.AgentComponent import AgentComponent
+
+
+class AtomicAgent(AgentComponent):
+    """
+    An atomic agent -- class to inherit from, not instantiate
+    """
+
+    def __init__(self, agentId, environment:Env, parameters=None):
+        self._agentId = agentId
+        self._environment = environment
+
