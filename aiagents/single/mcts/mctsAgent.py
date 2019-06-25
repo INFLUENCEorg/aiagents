@@ -7,10 +7,6 @@ from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
 from aienvs.runners.Episode import Episode
 from aienvs.Environment import Env
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-
-
 class treeNode():
     def __init__(self, state, reward, done, parent):
         self.state = copy.deepcopy(state)
@@ -24,7 +20,7 @@ class treeNode():
 
 
 class mctsAgent():
-    DEFAULT_PARAMETERS = {'iterationLimit':5000}
+    DEFAULT_PARAMETERS = {'iterationLimit':5000, 'explorationConstant': 1 / math.sqrt(2)}
 
     def __init__(self, agentId, environment: Env, parameters: dict, otherAgents=None):
         """
@@ -38,7 +34,6 @@ class mctsAgent():
             if 'iterationLimit' in self._parameters:
                 raise ValueError("Cannot have both a time limit and an iteration limit")
             # time taken for each MCTS search in milliseconds
-            self._timeLimit = self._parameters['timeLimit']
             self._limitType = 'time'
         else:
             if 'iterationLimit' not in self._parameters:
@@ -46,19 +41,15 @@ class mctsAgent():
             # number of iterations of the search
             if self._parameters['iterationLimit'] < 1:
                 raise ValueError("Iteration limit must be greater than one")
-            self._searchLimit = self._parameters['iterationLimit']
             self._limitType = 'iterations'
-
-        if 'explorationConstant' in self._parameters:
-           self._explorationConstant = self._parameters['explorationConstant']
-        else:
-           self._explorationConstant = 1 / math.sqrt(2)
 
         self._simulator = copy.deepcopy(environment)
         self._agentId = agentId
-        #self._otherAgents = otherAgents
+
         if(otherAgents):
             self._otherAgents = ComplexAgentComponent(otherAgents)
+        else:
+            self._otherAgents = None
 
     def step(self, observation, reward, done):
         observedState = copy.deepcopy(observation)
@@ -67,15 +58,14 @@ class mctsAgent():
         self._root = treeNode(state=observedState, reward=0, done=done, parent=None)
 
         if done:
-            print("RANDOM RETURN")
             return {self._agentId: self._simulator.action_space.spaces.get(self._agentId).sample()}
 
         if self._limitType == 'time':
-            timeLimit = time.time() + self._timeLimit / 1000
+            timeLimit = time.time() + self._parameters['timeLimit'] / 1000
             while time.time() < timeLimit:
                 self._executeRound()
         else:
-            for i in range(self._searchLimit):
+            for i in range(self._parameters['iterationLimit']):
                 self._executeRound()
 
         #breakpoint()
@@ -91,7 +81,7 @@ class mctsAgent():
         startingReward = node.immediateReward
         while not node.isTerminal:
             if node.isFullyExpanded:
-                node = self._getBestChild(node, self._explorationConstant)
+                node = self._getBestChild(node, self._parameters['explorationConstant'])
                 startingReward += node.immediateReward
             else:
                 node = self._expand(node)
@@ -143,10 +133,12 @@ class mctsAgent():
     def _getBestChild(self, node, explorationValue):
         bestValue = float("-inf")
         bestNodes = []
+        if(explorationValue==0):
+            logging.info("AGENT ID: " + self._agentId)
         for action, child in node.children.items():
             nodeValue = child.totalReward / child.numVisits + explorationValue * math.sqrt(2 * math.log(node.numVisits) / child.numVisits)
             if(explorationValue==0):
-                print("Action: " + str(self._simulator.ACTIONS[action]) + " Node value " + str(nodeValue) + " numVisits " + str(child.numVisits) + " totalReward " + str(child.totalReward))
+                logging.info("Action: " + str(self._simulator.ACTIONS[action]) + " Node value " + str(nodeValue) + " numVisits " + str(child.numVisits) + " totalReward " + str(child.totalReward))
             if nodeValue > bestValue:
                 bestValue = nodeValue
                 bestNodes = [child]

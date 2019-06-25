@@ -1,6 +1,7 @@
 from aiagents.single.AtomicAgent import AtomicAgent
 from aienvs.Environment import Env
 import logging
+import random
 
 
 class RandomAgent(AtomicAgent):
@@ -14,7 +15,8 @@ class RandomAgent(AtomicAgent):
         Selects just a single random action, wraps in a single element agentId:actionId dictionary
         """
         actions = dict()
-        actions.update({self._agentId: self._environment.action_space.spaces.get(self._agentId).sample()})
+        action = random.randint(0, self._environment.action_space.spaces.get(self._agentId).n-1)
+        actions.update({self._agentId: action })
 
         logging.debug("Id / action:" + str(actions))
 
