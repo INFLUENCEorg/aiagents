@@ -1,4 +1,5 @@
 import time
+import random
 import math
 import copy
 import logging
@@ -7,9 +8,10 @@ from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
 from aienvs.runners.Episode import Episode
 from aienvs.Environment import Env
 
+
 class treeNode():
     def __init__(self, state, reward, done, parent):
-        self.state = copy.deepcopy(state)
+        self._STATE = copy.deepcopy(state)
         self.isTerminal = copy.deepcopy(done)
         self.isFullyExpanded = copy.deepcopy(self.isTerminal)
         self.parent = parent
@@ -18,9 +20,30 @@ class treeNode():
         self.totalReward = 0
         self.children = {}
 
+    def getState(self):
+        """
+        STATE should be immutable for lifetime of the object
+        """
+        return copy.deepcopy(self._STATE)
+
+class actionNode():
+    def __init__(self, action, parent: treeNode):
+        self._ACTION = copy.deepcopy(action)
+        self.parent = parent
+        self.children = {}
+        self.numVisits = 0
+        self.totalReward = 0
+        self.numExpands = 0
+        self.isFullyExpanded=False
+
+    def getAction(self):
+        """
+        ACTION should be immutable for the lifetime of the object
+        """
+        return copy.deepcopy(self._ACTION)
 
 class mctsAgent():
-    DEFAULT_PARAMETERS = {'iterationLimit':5000, 'explorationConstant': 1 / math.sqrt(2)}
+    DEFAULT_PARAMETERS = {'iterationLimit':5000, 'explorationConstant': 1 / math.sqrt(2), 'samplingLimit': 10}
 
     def __init__(self, agentId, environment: Env, parameters: dict, otherAgents=None):
         """
@@ -76,40 +99,63 @@ class mctsAgent():
         node, startingReward = self._selectNode(self._root)
         totalReward = self._rollout(node, startingReward)
         self._backpropagate(node, totalReward)
-
-    def _selectNode(self, node):
-        startingReward = node.immediateReward
-        while not node.isTerminal:
-            if node.isFullyExpanded:
-                node = self._getBestChild(node, self._parameters['explorationConstant'])
-                startingReward += node.immediateReward
+    
+    def _selectNode(self, stateNode):
+        startingReward = stateNode.immediateReward
+        while not stateNode.isTerminal:
+            if stateNode.isFullyExpanded:
+                actionNode = self._getBestChild(stateNode, self._parameters['explorationConstant'])
+                childStateNodes = list(actionNode.children.values())
+                stateNode = random.choices( childStateNodes, [childState.numVisits for childState in childStateNodes] )[0]
+                startingReward += stateNode.immediateReward
             else:
-                node = self._expand(node)
-                startingReward += node.immediateReward
+                stateNode = self._expand(stateNode)
+                startingReward += stateNode.immediateReward
                 break
 
-        return node, startingReward
+        return stateNode, startingReward
 
     def _expand(self, node):
-        self._simulator.setState(node.state)
+        # expands by creating first an action node and then a state node
+        startState=node.getState()
+        self._simulator.setState(startState)
+
         agentActionSpace = self._simulator.action_space.spaces.get(self._agentId) 
-        
         treeAgent = RandomAgent( self._agentId, self._simulator )
         # remove Nones from the list
         jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [treeAgent, self._otherAgents])) )
-        actions = jointAgent.step( node.state, node.immediateReward, node.isTerminal )
-        state, reward, done, info = self._simulator.step(actions)
-
-        newNode = treeNode(state, reward, done, node)
+        actions = jointAgent.step( startState, node.immediateReward, node.isTerminal )
         agentAction = actions.get( self._agentId )
 
-        node.children[agentAction] = newNode
+        try:
+            # using str() for hashing -- shouldn't be slow but not the cleanest
+            # TODO: consider making actions immutable
+            childActionNode=node.children[str(agentAction)]
+        except KeyError:
+            childActionNode=actionNode( agentAction, node )
+            node.children[str(agentAction)]=childActionNode
 
-        if agentActionSpace.n == len(node.children):
-            node.isFullyExpanded = True
-        return newNode
+        if( childActionNode.isFullyExpanded ):
+            childStateNodes = list(childActionNode.children.values())
+            childStateNode = random.choices( childStateNodes, [childState.numVisits for childState in childStateNodes] )[0]
+        else:
+            state, reward, done, info = self._simulator.step(actions)
+            # using str() for hashing -- shouldn't be slow but not the cleanest
+            # TODO: consider making states immutable
+            try:  
+                childStateNode = childActionNode.children[str(state)]
+            except KeyError:
+                childStateNode = treeNode(state, reward, done, childActionNode)
+                childActionNode.children[str(state)]=childStateNode
+            childActionNode.numExpands+=1
 
-        raise Exception("Should never reach here")
+        if( childActionNode.numExpands >= self._parameters['samplingLimit'] ):
+            childActionNode.isFullyExpanded = True
+
+        if agentActionSpace.n == len(node.children.values()):
+            node.isFullyExpanded = all( [_childActionNode.isFullyExpanded for _childActionNode in node.children.values()] )
+
+        return childStateNode
 
     def _backpropagate(self, node, reward):
         while node is not None:
@@ -121,9 +167,13 @@ class mctsAgent():
         if node.isTerminal:
             return startingReward
 
+        startState = node.getState()
+        self._simulator.setState(startState)
+
         rolloutAgent =  RandomAgent( self._agentId, self._simulator )
+        #removes Nones from the list
         jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [rolloutAgent, self._otherAgents])) )
-        firstActions = jointAgent.step( node.state, node.immediateReward, node.isTerminal )
+        firstActions = jointAgent.step( startState, node.immediateReward, node.isTerminal )
         rolloutEpisode = Episode( jointAgent, self._simulator, firstActions )
 
         steps, rolloutReward = rolloutEpisode.run()
@@ -135,18 +185,18 @@ class mctsAgent():
         bestNodes = []
         if(explorationValue==0):
             logging.info("AGENT ID: " + self._agentId)
-        for action, child in node.children.items():
+        for child in node.children.values():
             nodeValue = child.totalReward / child.numVisits + explorationValue * math.sqrt(2 * math.log(node.numVisits) / child.numVisits)
-            if(explorationValue==0):
-                logging.info("Action: " + str(self._simulator.ACTIONS[action]) + " Node value " + str(nodeValue) + " numVisits " + str(child.numVisits) + " totalReward " + str(child.totalReward))
+            #if(explorationValue==0 && no):
+            #    logging.info("Action: " + str(self._simulator.ACTIONS[action]) + " Node value " + str(nodeValue) + " numVisits " + str(child.numVisits) + " totalReward " + str(child.totalReward))
             if nodeValue > bestValue:
                 bestValue = nodeValue
                 bestNodes = [child]
             elif nodeValue == bestValue:
                 bestNodes.append(child)
-        return bestNodes[0]#random.choice(bestNodes)
+        return random.choice(bestNodes)
 
     def _getAction(self, root, bestChild):
-        for action, node in root.children.items():
+        for node in root.children.values():
             if node is bestChild:
-                return action
+                return node.getAction()
