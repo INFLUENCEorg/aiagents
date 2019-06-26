@@ -24,9 +24,15 @@ class treeNode():
             node.totalReward += reward
             node = node.parent
 
-    def getBestChild(self, explorationValue):
+    def getBestChild(self):
         """
-        gets best child modulo the exploration constant for UCT
+        returns the best child
+        """
+        return self.selectNode(explorationValue=0)
+
+    def selectNode(self, explorationValue):
+        """
+        selects child node based on the UCT formula
         """
         bestValue = float("-inf")
         bestNodes = []
@@ -54,18 +60,41 @@ class treeNode():
 
 
 class stateNode(treeNode):
-    def __init__(self, state, reward, done, parent):
+    def __init__(self, state, reward, done, expandLimit, parent):
         super().__init__(parent)
         self._STATE = copy.deepcopy(state)
         self.isTerminal = copy.deepcopy(done)
         self.isFullyExpanded = copy.deepcopy(self.isTerminal)
         self.immediateReward = reward
+        self._expandLimit = expandLimit
 
     def getState(self):
         """
         STATE should be immutable for lifetime of the object
         """
         return copy.deepcopy(self._STATE)
+
+    def expand(self, agentComponent, agentId):
+        """
+        expands the state node by the agent action child
+        """
+        actions = agentComponent.step( self._STATE, self.immediateReward, self.isTerminal )
+        agentAction=actions.get(agentId)
+
+        try:
+            childActionNode=self.children[str(agentAction)]
+        except KeyError:
+            # create new action node
+            childActionNode=actionNode( agentAction, self )
+            self.children[str(agentAction)]=childActionNode
+
+        childActionNode.numExpands+=1
+
+        if self._expandLimit >= len(self.children.values()):
+            self.isFullyExpanded = all( [_childActionNode.isFullyExpanded for _childActionNode in self.children.values()] )
+
+        return childActionNode, actions
+
 
 class actionNode(treeNode):
     def __init__(self, action, parent: stateNode):
@@ -77,6 +106,36 @@ class actionNode(treeNode):
         ACTION should be immutable for the lifetime of the object
         """
         return copy.deepcopy(self._ACTION)
+
+    def selectNode(self, explorationValue):
+        """
+        we cannot really select a state node, we can just sample from it
+        """
+        return self.sampleChild()
+
+    def expand(self, simulator, actions, agentId, expandLimit):
+        """
+        expands a node by sampling from the simulator
+        """
+        if( self.isFullyExpanded ):
+            # sparse sampling
+            return self.sampleChild()
+
+        state, reward, done, info = simulator.step(actions)
+        try:  
+            # state can be aggregated
+            childStateNode = self.children[str(state)]
+        except KeyError:
+            # create new state node
+            childExpandLimit = simulator.action_space.spaces.get(agentId).n
+            childStateNode = stateNode(state, reward, done, childExpandLimit, self)
+            self.children[str(state)]=childStateNode
+        childStateNode.numExpands+=1
+
+        if( self.numExpands >= expandLimit ):
+            self.isFullyExpanded = True
+
+        return childStateNode
 
 
 class mctsAgent():
@@ -110,11 +169,14 @@ class mctsAgent():
         else:
             self._otherAgents = None
 
+        treeAgent = RandomAgent( self._agentId, self._simulator )
+        # remove Nones from the list
+        self._jointTreeAgent = ComplexAgentComponent( list(filter(None.__ne__, [treeAgent, self._otherAgents])) )
+
     def step(self, observation, reward, done):
         observedState = copy.deepcopy(observation)
         self._simulator.setState(copy.deepcopy(observedState))
-
-        self._root = stateNode(state=observedState, reward=0, done=done, parent=None)
+        self._root = stateNode(state=observedState, reward=0, done=done, expandLimit=self._simulator.action_space.spaces.get(self._agentId).n, parent=None)
 
         if done:
             return {self._agentId: self._simulator.action_space.spaces.get(self._agentId).sample()}
@@ -127,7 +189,7 @@ class mctsAgent():
             for i in range(self._parameters['iterationLimit']):
                 self._executeRound()
 
-        bestChild = self._root.getBestChild(explorationValue = 0)
+        bestChild = self._root.getBestChild()
         action = bestChild.getAction()
         logging.info("Agent id " + self._agentId + " best action " + self._simulator.ACTIONS[action])
 
@@ -142,8 +204,8 @@ class mctsAgent():
         startingReward = stateNode.immediateReward
         while not stateNode.isTerminal:
             if stateNode.isFullyExpanded:
-                actionNode = stateNode.getBestChild(self._parameters['explorationConstant'])
-                stateNode = actionNode.sampleChild()
+                actionNode = stateNode.selectNode(self._parameters['explorationConstant'])
+                stateNode = actionNode.selectNode(self._parameters['explorationConstant'])
                 startingReward += stateNode.immediateReward
             else:
                 stateNode = self._expand(stateNode)
@@ -152,47 +214,15 @@ class mctsAgent():
 
         return stateNode, startingReward
 
-    def _expand(self, node):
+    def _expand(self, parentStateNode):
         # expands by creating first an action node and then a state node
         # using str() for hashing -- shouldn't be slow but not the cleanest
         # TODO: consider making actions immutable
-        startState=node.getState()
+        childActionNode, actions = parentStateNode.expand( self._jointTreeAgent, self._agentId )
+
+        startState = parentStateNode.getState()
         self._simulator.setState(startState)
-
-        agentActionSpace = self._simulator.action_space.spaces.get(self._agentId) 
-        treeAgent = RandomAgent( self._agentId, self._simulator )
-        # remove Nones from the list
-        jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [treeAgent, self._otherAgents])) )
-        actions = jointAgent.step( startState, node.immediateReward, node.isTerminal )
-        agentAction = actions.get( self._agentId )
-
-        try:
-            childActionNode=node.children[str(agentAction)]
-        except KeyError:
-            # create new action node
-            childActionNode=actionNode( agentAction, node )
-            node.children[str(agentAction)]=childActionNode
-
-        if( childActionNode.isFullyExpanded ):
-            # sparse sampling
-            childStateNode = childActionNode.sampleChild()
-        else:
-            state, reward, done, info = self._simulator.step(actions)
-            try:  
-                # state can be aggregated
-                childStateNode = childActionNode.children[str(state)]
-            except KeyError:
-                # create new state node
-                childStateNode = stateNode(state, reward, done, childActionNode)
-                childActionNode.children[str(state)]=childStateNode
-            childStateNode.numExpands+=1
-            childActionNode.numExpands+=1
-
-        if( childActionNode.numExpands >= self._parameters['samplingLimit'] ):
-            childActionNode.isFullyExpanded = True
-
-        if agentActionSpace.n == len(node.children.values()):
-            node.isFullyExpanded = all( [_childActionNode.isFullyExpanded for _childActionNode in node.children.values()] )
+        childStateNode = childActionNode.expand(self._simulator, actions, self._agentId, self._parameters['samplingLimit'] )
 
         return childStateNode
 
