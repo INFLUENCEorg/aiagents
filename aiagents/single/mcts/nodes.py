@@ -5,7 +5,7 @@ import math
 from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
 import random
 
-class treeNode():
+class TreeNode():
     def __init__(self, parent):
         self.numVisits = 0
         self.totalReward = 0
@@ -31,8 +31,8 @@ class treeNode():
         if self._parent is not None:
             self._parent.backpropagate(reward)
 
-class stateNode(treeNode):
-    def __init__(self, state, reward, done, parent):
+class StateNode(TreeNode):
+    def __init__(self, state, reward, done, parent: TreeNode):
         super().__init__(parent)
         self._STATE = copy.deepcopy(state)
         self.isTerminal = copy.deepcopy(done)
@@ -80,7 +80,7 @@ class stateNode(treeNode):
 
         key = str(agentAction)
         if key not in self._children.keys():
-            self._children[key]=actionNode( agentAction, self )
+            self._children[key]=ActionNode( agentAction, self )
         self._children[key].numExpands+=1
 
         if self.simulator.action_space.spaces.get(self.agentId).n <= len(self._children.values()):
@@ -107,7 +107,7 @@ class stateNode(treeNode):
 
         return random.choice(bestNodes)
 
-class rootNode(stateNode):
+class RootNode(StateNode):
     def __init__(self, state, reward, done, agentId=None, simulator=None, parameters=None, treeAgent=None, otherAgents=None, rolloutAgent=None):
         # no parent
         super().__init__(state, reward, done, None)
@@ -119,8 +119,8 @@ class rootNode(stateNode):
         self.otherAgents = otherAgents
         self.parameters = parameters
 
-class actionNode(treeNode):
-    def __init__(self, action, parent: stateNode):
+class ActionNode(TreeNode):
+    def __init__(self, action, parent: StateNode):
         super().__init__(parent)
         self._ACTION = copy.deepcopy(action)
 
@@ -145,13 +145,15 @@ class actionNode(treeNode):
         # sample an action, step the simulator
         simulator = self.simulator
         simulator.setState(self._parent.getState())
-        actions = self.otherAgents.step(self._parent.getState(), self._parent.immediateReward, self._parent.isTerminal)
+        actions={}
+        if( self.otherAgents ):
+            actions = self.otherAgents.step(self._parent.getState(), self._parent.immediateReward, self._parent.isTerminal)
         actions.update(self.getAction())
         state, reward, done, info = simulator.step(actions)
         
         key = str(state)
         if key not in self._children.keys():
-            self._children[key] = stateNode(state, reward, done, self)
+            self._children[key] = StateNode(state, reward, done, self)
         self._children[key].numExpands+=1
 
         if( self.numExpands >= self.parameters['samplingLimit'] ):

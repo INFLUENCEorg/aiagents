@@ -2,12 +2,12 @@ import time
 import copy
 import logging
 from aiagents.single.RandomAgent import RandomAgent
-from aiagents.single.mcts.nodes import rootNode
+from aiagents.single.mcts.nodes import RootNode
 from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
 from aienvs.Environment import Env
 import math
 
-class mctsAgent():
+class MctsAgent():
     DEFAULT_PARAMETERS = {'iterationLimit':10000, 'treeParameters': {'explorationConstant': 1 / math.sqrt(2), 'samplingLimit': 20}}
 
     def __init__(self, agentId, environment: Env, parameters: dict, otherAgents=None):
@@ -47,7 +47,7 @@ class mctsAgent():
             # whatever action is ok
             return self._treeAgent.step(observation, reward, done)
 
-        root = rootNode(state=observation, reward=0., done=done, simulator=self._simulator, 
+        root = RootNode(state=observation, reward=0., done=done, simulator=self._simulator, 
                 agentId=self.agentId, parameters=self._parameters['treeParameters'],
                 treeAgent=self._treeAgent, otherAgents=self._otherAgents, rolloutAgent = self._rolloutAgent)
 
