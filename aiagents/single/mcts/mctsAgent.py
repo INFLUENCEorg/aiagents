@@ -9,7 +9,7 @@ from aienvs.runners.Episode import Episode
 from aienvs.Environment import Env
 
 class treeNode():
-    def __init__(self, parent=None, agentId=None, simulator=None, expandLimit=None):
+    def __init__(self, parent=None, agentId=None, simulator=None, parameters=None, treeAgent=None, otherAgents=None, rolloutAgent=None):
         self.numVisits = 0
         self.totalReward = 0
         self.numExpands = 0
@@ -20,12 +20,47 @@ class treeNode():
         if(parent):
             self.simulator = parent.simulator
             self.agentId = parent.agentId
-            self.expandLimit = parent.expandLimit
+            self.treeAgent = parent.treeAgent
+            self.otherAgents = parent.otherAgents
+            self.rolloutAgent = parent.rolloutAgent
+            self.parameters = parent.parameters
         else:
             self.simulator = simulator
             self.agentId = agentId
-            self.expandLimit=expandLimit
-    
+            self.treeAgent = treeAgent
+            self.rolloutAgent = rolloutAgent
+            self.otherAgents = otherAgents
+            self.parameters = parameters
+
+class stateNode(treeNode):
+    def __init__(self, state, reward, done, parent, simulator=None, agentId=None, parameters=None, treeAgent=None, otherAgents=None, rolloutAgent=None):
+        super().__init__(parent, agentId, simulator, parameters, treeAgent, otherAgents)
+        self._STATE = copy.deepcopy(state)
+        self.isTerminal = copy.deepcopy(done)
+        self.isFullyExpanded = copy.deepcopy(self.isTerminal)
+        self.immediateReward = reward
+
+    def executeRound(self):
+        """
+        we select the next state node by selecting the best action node then sampling a child state
+        """
+        selectedNode = self
+        reward=0
+        
+        while True:
+            reward += selectedNode.immediateReward
+            if selectedNode.isFullyExpanded:
+                if selectedNode.isTerminal:
+                    break
+                selectedNode = selectedNode._UCT(self.parameters['explorationConstant']).sampleChild()
+            else:
+                # calls expand twice, first for the state node then the action node
+                selectedNode, rolloutReward = selectedNode.expand()
+                reward += rolloutReward
+                break
+
+        selectedNode.backpropagate(reward)
+ 
     def backpropagate(self, reward):
         node=self
         while node is not None:
@@ -37,16 +72,15 @@ class treeNode():
         """
         returns the best child
         """
-        return self.selectNode(explorationValue=0)
-
-    def selectNode(self, explorationValue):
+        return self._UCT(explorationValue=0)
+ 
+    def _UCT(self, explorationValue):
         """
-        selects child node based on the UCT formula
+        the UCT formula
         """
         bestValue = float("-inf")
         bestNodes = []
         for child in self.children.values():
-            # UCT
             childValue = child.totalReward / child.numVisits + explorationValue * math.sqrt(2 * math.log(self.numVisits) / child.numVisits)
             if childValue > bestValue:
                 bestValue = childValue
@@ -59,22 +93,6 @@ class treeNode():
 
         return random.choice(bestNodes)
 
-    def sampleChild(self):
-        """
-        Sampling a child by weighted number of expands,
-        emulating the environment dynamics
-        """
-        childStateNodes = list(self.children.values())
-        return random.choices( childStateNodes, [childState.numExpands for childState in childStateNodes] )[0]
-
-
-class stateNode(treeNode):
-    def __init__(self, state, reward, done, parent, simulator=None, agentId=None, expandLimit=None):
-        super().__init__(parent, agentId, simulator, expandLimit)
-        self._STATE = copy.deepcopy(state)
-        self.isTerminal = copy.deepcopy(done)
-        self.isFullyExpanded = copy.deepcopy(self.isTerminal)
-        self.immediateReward = reward
 
     def getState(self):
         """
@@ -82,32 +100,21 @@ class stateNode(treeNode):
         """
         return copy.deepcopy(self._STATE)
 
-    def expand(self, myAgent, explorationValue=0):
+    def expand(self):
         """
-        expands the state node by the agent action child
+        expands the state node by the agent action, automatically expands the child node
         """
-        if( self.isFullyExpanded ):
-            # sparse sampling
-            # return self.selectNode(explorationValue)
-            raise( "Should never reach here" )
+        agentAction = self.treeAgent.step( self.getState(), self.immediateReward, self.isTerminal )
 
-        agentAction = myAgent.step( self.getState(), self.immediateReward, self.isTerminal )
-
-        try:
-            childActionNode=self.children[str(agentAction)]
-        except KeyError:
-            # create new action node
-            childActionNode=actionNode( agentAction, self )
-            self.children[str(agentAction)]=childActionNode
-
-
-        childActionNode.numExpands+=1
+        key = str(agentAction)
+        if key not in self.children.keys():
+            self.children[key]=actionNode( agentAction, self )
+        self.children[key].numExpands+=1
 
         if self.simulator.action_space.spaces.get(self.agentId).n <= len(self.children.values()):
-            #self.isFullyExpanded = True
             self.isFullyExpanded = all( [_childActionNode.isFullyExpanded for _childActionNode in self.children.values()] )
 
-        return childActionNode
+        return self.children[key].expand()
 
 
 class actionNode(treeNode):
@@ -121,46 +128,52 @@ class actionNode(treeNode):
         """
         return copy.deepcopy(self._ACTION)
 
-    def selectNode(self, explorationValue=0):
+    def sampleChild(self):
         """
-        we cannot really select a state node, we can just sample from it
+        Sampling a child by weighted number of expands,
+        emulating the environment dynamics
         """
-        return self.sampleChild()
+        childStateNodes = list(self.children.values())
+        return random.choices( childStateNodes, [childState.numExpands for childState in childStateNodes] )[0]
 
-    def expand(self, expandLimit, otherAgents):
+    def expand(self):
         """
         expands a node by sampling from the simulator
         """
-        #if( self.isFullyExpanded ):
-        #    # sparse sampling
-            #return self.selectNode()
-        #    breakpoint()
-        #    raise Exception("Should never reach here")
-
-        self.simulator.setState(self.parent.getState())
-        actions = otherAgents.step(self.parent.getState(), self.parent.immediateReward, self.parent.isTerminal)
+        # sample an action, step the simulator
+        simulator = self.simulator
+        simulator.setState(self.parent.getState())
+        actions = self.otherAgents.step(self.parent.getState(), self.parent.immediateReward, self.parent.isTerminal)
         actions.update(self.getAction())
+        state, reward, done, info = simulator.step(actions)
         
-        state, reward, done, info = self.simulator.step(actions)
-        try:  
-            # state can be aggregated
-            childStateNode = self.children[str(state)]
-        except KeyError:
-            # create new state node
-            #childExpandLimit = self.simulator.action_space.spaces.get(self.agentId).n
-            childStateNode = stateNode(state, reward, done, self)
-            self.children[str(state)]=childStateNode
+        key = str(state)
+        if key not in self.children.keys():
+            self.children[key] = stateNode(state, reward, done, self)
+        self.children[key].numExpands+=1
 
-        childStateNode.numExpands+=1
-
-        if( self.numExpands >= expandLimit ):
+        if( self.numExpands >= self.parameters['samplingLimit'] ):
             self.isFullyExpanded = True
 
-        return childStateNode
+        # rollout and backpropagate
+        if done:
+            rolloutReward = 0
+        else:
+            rolloutReward = self._rollout( simulator, state, reward, done, self.otherAgents )
+        
+        return self.children[key], rolloutReward + reward
 
+    def _rollout(self, simulator, state, reward, done, otherAgents):
+        rolloutAgent =  RandomAgent( self.agentId, simulator )
+        #removes Nones from the list
+        jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [rolloutAgent, self.otherAgents])) )
+        firstActions = jointAgent.step( state, reward, done )
+        rolloutEpisode = Episode( jointAgent, simulator, firstActions )
+        steps, rolloutReward = rolloutEpisode.run()
+        return rolloutReward
 
 class mctsAgent():
-    DEFAULT_PARAMETERS = {'iterationLimit':10000, 'explorationConstant': 1 / math.sqrt(2), 'samplingLimit': 20}
+    DEFAULT_PARAMETERS = {'iterationLimit':10000, 'treeParameters': {'explorationConstant': 1 / math.sqrt(2), 'samplingLimit': 20}}
 
     def __init__(self, agentId, environment: Env, parameters: dict, otherAgents=None):
         """
@@ -191,11 +204,11 @@ class mctsAgent():
             self._otherAgents = None
 
         self._treeAgent = RandomAgent( self.agentId, self._simulator )
+        self._rolloutAgent = RandomAgent( self.agentId, self._simulator )
 
     def step(self, observation, reward, done):
-        observedState = copy.deepcopy(observation)
-        self._simulator.setState(copy.deepcopy(observedState))
-        self._root = stateNode(state=observedState, reward=0., done=done, simulator=self._simulator, agentId=self.agentId, parent=None, expandLimit=self._parameters['samplingLimit'])
+        root = stateNode(state=observation, reward=0., done=done, simulator=self._simulator, agentId=self.agentId, parent=None, parameters=self._parameters['treeParameters'],
+                treeAgent=self._treeAgent, otherAgents=self._otherAgents, rolloutAgent = self._rolloutAgent)
 
         if done:
             return {self.agentId: self._simulator.action_space.spaces.get(self.agentId).sample()}
@@ -203,58 +216,13 @@ class mctsAgent():
         if self._limitType == 'time':
             timeLimit = time.time() + self._parameters['timeLimit'] / 1000
             while time.time() < timeLimit:
-                self._executeRound()
+                root.executeRound()
         else:
             for i in range(self._parameters['iterationLimit']):
-                self._executeRound()
+                root.executeRound()
 
-        bestChild = self._root.getBestChild()
-        action = bestChild.getAction()
+        action = root.getBestChild().getAction()
         logging.info("Action "+ str(action))
 
         return action
 
-    def _executeRound(self):
-        node, startingReward = self._selectNode(self._root)
-        totalReward = self._rollout(node, startingReward)
-        node.backpropagate(totalReward)
-    
-    def _selectNode(self, stateNode):
-        startingReward = stateNode.immediateReward
-        while not stateNode.isTerminal:
-            if stateNode.isFullyExpanded:
-                actionNode = stateNode.selectNode(self._parameters['explorationConstant'])
-                stateNode = actionNode.selectNode(self._parameters['explorationConstant'])
-                startingReward += stateNode.immediateReward
-            else:
-                stateNode = self._expand(stateNode)
-                startingReward += stateNode.immediateReward
-                break
-
-        return stateNode, startingReward
-
-    def _expand(self, parentStateNode):
-        # expands by creating first an action node and then a state node
-        # using str() for hashing -- shouldn't be slow but not the cleanest
-        # TODO: consider making actions immutable
-        childActionNode = parentStateNode.expand( self._treeAgent, self._parameters['explorationConstant'] )
-        childStateNode = childActionNode.expand( self._parameters['samplingLimit'], self._otherAgents )
-
-        return childStateNode
-
-    def _rollout(self, node, startingReward):
-        if node.isTerminal:
-            return startingReward
-
-        startState = node.getState()
-        self._simulator.setState(startState)
-        rolloutAgent =  RandomAgent( self.agentId, self._simulator )
-        #removes Nones from the list
-        jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [rolloutAgent, self._otherAgents])) )
-        firstActions = jointAgent.step( startState, node.immediateReward, node.isTerminal )
-        rolloutEpisode = Episode( jointAgent, self._simulator, firstActions )
-
-        steps, rolloutReward = rolloutEpisode.run()
-        totalReward = startingReward + rolloutReward
-
-        return totalReward
