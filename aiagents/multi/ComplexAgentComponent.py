@@ -1,4 +1,5 @@
 from aiagents.AgentComponent import AgentComponent
+import copy
 import logging
 
 class ComplexAgentComponent(AgentComponent):

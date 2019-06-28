@@ -21,11 +21,12 @@ class MctsAgent():
         if 'timeLimit' in self._parameters:
             if 'iterationLimit' in self._parameters:
                 raise ValueError("Cannot have both a time limit and an iteration limit")
-            # time taken for each MCTS search in milliseconds
             self._limitType = 'time'
         else:
             if 'iterationLimit' not in self._parameters:
-                raise ValueError("Must have either a time limit or an iteration limit")
+                DEFAULT_LIMIT=1000
+                logging.error("Must have either a time limit or an iteration limit. Using default iteration limit: " + str(DEFAULT_LIMIT))
+                self._parameters['iterationLimit']=DEFAULT_LIMIT
             # number of iterations of the search
             if self._parameters['iterationLimit'] < 1:
                 raise ValueError("Iteration limit must be greater than one")
