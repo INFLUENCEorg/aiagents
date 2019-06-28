@@ -45,7 +45,7 @@ class MctsAgent():
         if rolloutAgent is None:
             self._rolloutAgent = RandomAgent( self.agentId, self._simulator )
         else:
-            self._rolloutAgent
+            self._rolloutAgent = rolloutAgent
             
         self._otherAgents = otherAgents
        
