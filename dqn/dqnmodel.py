@@ -90,7 +90,7 @@ class DeepQNetwork(object):
 
 class Agent(object):
     def __init__(self, alpha, gamma, mem_size, n_actions, epsilon, batch_size,
-                 replace_target=2, input_dims=(210, 160, 4),
+                 replace_target=10000, input_dims=(210, 160, 4),
                  q_next_dir="tmp/q_next", q_eval_dir="tmp/q_eval"):
         self.n_actions = n_actions
         self.action_space = [i for i in range(self.n_actions)]
@@ -195,10 +195,10 @@ class Agent(object):
                                             self.q_eval.actions: action_batch,
                                             self.q_eval.q_target: q_target})
 
-        loss = self.q_eval.sess.run(self.q_eval.loss,
+        '''loss = self.q_eval.sess.run(self.q_eval.loss,
                                     feed_dict={self.q_eval.input: state_batch,
                                                self.q_eval.actions: action_batch,
-                                               self.q_eval.q_target: q_target})
+                                               self.q_eval.q_target: q_target})'''
 
 
 
@@ -212,7 +212,7 @@ class Agent(object):
         self.q_eval.writer.flush()
 
 
-        if self.mem_cntr > 1000:
+        if self.mem_cntr > 10000:
             if self.epsilon > 0.05:
                 self.epsilon -= 4e-7
             elif self.epsilon <= 0.05:
