@@ -1,5 +1,5 @@
 from aienvs.Environment import Env
-from aiagents import AgentComponent
+from aiagents.AgentComponent import AgentComponent
 
 
 def createAgent(fullname:str, agentId:str, environment:Env, parameters:dict) -> AgentComponent:
@@ -12,14 +12,25 @@ def createAgent(fullname:str, agentId:str, environment:Env, parameters:dict) -> 
     @param parameters see AgentComponent __init__
     @return an initialized AgentComponent
     '''
-    klass = classForName(fullname)
-    # FIXME check klass instantiates AgentComponent, like this
-    #         if not isinstance(klass, AgentComponent):
-    #             raise Exception("Class " + fullname + " does not extend AgentComponent")
-
-    # For unknown reasons, we need to add the 'self' to this call?
+    klass = classForNameTyped(fullname, AgentComponent)
     obj = klass(agentId, environment, parameters)
     return obj
+
+
+def classForNameTyped(klsname:str, expectedkls):
+    """
+    @param klsname the string full path to the class to load. 
+    Eg "aiagents.single.RandomAgent.RandomAgent".
+    The class to load has to be on the classpath.
+    @param expectedkls the expected class, eg AgentComponent
+    @return a class object that is subclass of expectedkls. You can make instances of this class object 
+    by calling it with the constructor arguments.
+    @raise exception if klsname does not contain expected class or subclass of it. 
+    """
+    klass = classForName(klsname)
+    if not issubclass(klass, expectedkls):
+        raise Exception("Class " + klsname + " does not extend " + str(expectedkls))
+    return klass
 
 
 def classForName(kls:str):

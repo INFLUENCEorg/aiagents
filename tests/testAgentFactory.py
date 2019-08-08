@@ -1,7 +1,7 @@
 from LoggedTestCase import LoggedTestCase
 from aienvs.Environment import Env
 from unittest.mock import Mock
-from aiagents.AgentFactory import createAgent, classForName
+from aiagents.AgentFactory import createAgent, classForName, classForNameTyped
 import datetime
 
 
@@ -16,6 +16,15 @@ class testAgentFactory(LoggedTestCase):
         time = D.now()
         actualtime = datetime.datetime.now()
         self.assertEquals(str(time)[0:10], str(actualtime)[0:10])
+
+    def test_get_class_typed(self):
+        D = classForNameTyped("datetime.datetime", datetime.datetime)
+        time = D.now()
+        actualtime = datetime.datetime.now()
+        self.assertEquals(str(time)[0:10], str(actualtime)[0:10])
+
+    def test_get_class_typed_wrong(self):
+        self.assertRaises(Exception, classForNameTyped, "datetime.datetime", Env)
 
     def test_smoke(self):
         env = Mock()
