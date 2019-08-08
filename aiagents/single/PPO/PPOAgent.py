@@ -9,12 +9,12 @@ import logging
 
 class PPOAgent(Controller, AtomicAgent):
 
-    def __init__(self, agentId, environment:Env, parameters):
+    def __init__(self, agentId, environment:Env, parameters:dict):
         AtomicAgent.__init__(self, agentId, environment, parameters)
         self._num_actions = {}
         self._prev_state = None
         self._observation_space = environment.observation_space
-        #TODO: change to self._step_output = dict({"obs": observation_space.sample(), "reward": None, "done": None, "prev_action": None})
+        # TODO: change to self._step_output = dict({"obs": observation_space.sample(), "reward": None, "done": None, "prev_action": None})
         self._step_output = dict({"obs": None, "reward": None, "done": None, "prev_action": None})
         self._prev_action = [-1]
         self._parameters = parameters
@@ -45,7 +45,6 @@ class PPOAgent(Controller, AtomicAgent):
         else:
             self._seq_len = 1
 
-
     def step(self, observation, reward, done):
         new_state = np.zeros((1, self._parameters['frame_height'],
                               self._parameters['frame_width'],
@@ -56,7 +55,7 @@ class PPOAgent(Controller, AtomicAgent):
         new_state[0, :, :, 1:] = prev_state[:, :, :, :-1]
 
         next_step_output = dict({"obs": new_state, "reward": reward, "done": done, "prev_action": self._prev_action})
-        if( self._step_output["obs"] is None ):
+        if(self._step_output["obs"] is None):
             self._step_output = next_step_output
 
         self.increment_step()
@@ -76,8 +75,8 @@ class PPOAgent(Controller, AtomicAgent):
             self.write_summary()
 
         self._step_output = next_step_output
-        action=self._get_actions(self._step_output)
-        self._prev_action=action.get('action')[0]
+        action = self._get_actions(self._step_output)
+        self._prev_action = action.get('action')[0]
         return {self._agentId: action['action'][0][0]}
 
     ############# PRIVATE METHODS ####################
@@ -101,7 +100,7 @@ class PPOAgent(Controller, AtomicAgent):
         # padding incomplete sequences
         self._replay_memory['masks'].append(1)
         self._cumulative_rewards += next_step_output['reward']
-        logging.debug("Cumulative reward"+str(self._cumulative_rewards)+ " reward" + str(next_step_output['reward']))
+        logging.debug("Cumulative reward" + str(self._cumulative_rewards) + " reward" + str(next_step_output['reward']))
         self._stats['value'].append(get_actions_output['value'][0])
         self._stats['entropy'].append(get_actions_output['entropy'])
         self._stats['learning_rate'].append(get_actions_output['learning_rate'])
@@ -152,7 +151,7 @@ class PPOAgent(Controller, AtomicAgent):
                                                  self._parameters['gamma'],
                                                  self._parameters['lambda'])
             self._replay_memory['advantages'].extend(advantages)
-            returns = advantages + np.reshape(batch['values'],-1)
+            returns = advantages + np.reshape(batch['values'], -1)
             self._replay_memory['returns'].extend(returns)
             self._t = 0
 
@@ -189,10 +188,10 @@ class PPOAgent(Controller, AtomicAgent):
         advantages = np.zeros(self._parameters['time_horizon'], dtype=np.float32)
         for t in reversed(range(self._parameters['time_horizon'])):
             mask = 1.0 - dones[:, t]
-            last_value = last_value*mask
-            last_advantage = last_advantage*mask
-            delta = rewards[:, t] + gamma*last_value - values[:, t]
-            last_advantage = delta + gamma*lambd*last_advantage
+            last_value = last_value * mask
+            last_advantage = last_advantage * mask
+            delta = rewards[:, t] + gamma * last_value - values[:, t]
+            last_advantage = delta + gamma * lambd * last_advantage
             advantages[t] = last_advantage
             last_value = values[:, t]
         return advantages

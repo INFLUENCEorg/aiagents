@@ -7,7 +7,7 @@ class AtomicAgent(AgentComponent):
     An atomic agent -- class to inherit from, not instantiate
     """
 
-    def __init__(self, agentId, environment:Env, parameters=None):
+    def __init__(self, agentId:str, environment:Env, parameters:dict=None):
         self._agentId = agentId
         self._environment = environment
 
