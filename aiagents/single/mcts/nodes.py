@@ -46,6 +46,7 @@ class StateNode(TreeNode):
         selectedNode = self
         reward=0
         
+
         while True:
             reward += selectedNode.immediateReward
             if selectedNode.isFullyExpanded:
@@ -83,10 +84,12 @@ class StateNode(TreeNode):
             self._children[key]=ActionNode( agentAction, self )
         self._children[key].numExpands+=1
 
+        expandedNode = self._children[key].expand()
+
         if self.simulator.action_space.spaces.get(self.agentId).n <= len(self._children.values()):
             self.isFullyExpanded = all( [_childActionNode.isFullyExpanded for _childActionNode in self._children.values()] )
 
-        return self._children[key].expand()
+        return expandedNode
 
     def _UCT(self, explorationValue):
         """
@@ -170,8 +173,7 @@ class ActionNode(TreeNode):
     def _rollout(self, simulator, state, reward, done, otherAgents):
         #removes Nones from the list
         jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [self.rolloutAgent, self.otherAgents])) )
-        firstActions = jointAgent.step( state, reward, done )
-        rolloutEpisode = Episode( jointAgent, simulator, firstActions )
+        rolloutEpisode = Episode( jointAgent, simulator, state )
         steps, rolloutReward = rolloutEpisode.run()
         return rolloutReward
 

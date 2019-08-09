@@ -1,4 +1,4 @@
-from LoggedTestCase import LoggedTestCase
+from .LoggedTestCase import LoggedTestCase
 from aienvs.Environment import Env
 from unittest.mock import Mock
 from aiagents.AgentFactory import createAgent, classForName, classForNameTyped
