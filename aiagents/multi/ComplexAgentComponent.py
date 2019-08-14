@@ -41,9 +41,12 @@ class ComplexAgentComponent(AtomicAgent):
 
             if not ('classname' in agentsettings and isinstance(agentsettings['classname'], str)) :
                 raise Exception("key 'classname' containing string is required in parameters " + str(parameters))
-            if not ('parameters' in agentsettings and isinstance(agentsettings['classname'], dict)) :
+            if not ('parameters' in agentsettings and isinstance(agentsettings['parameters'], dict)) :
                 raise Exception("key 'parameters' containing dict is required in parameters " + str(parameters))
-            self._subAgents.push(self._newAgent(aid, agentsettings['classname'], agentsettings['parameters']))
+            try:
+                self._subAgents.append(self._newAgent(aid, agentsettings['classname'], agentsettings['parameters']))
+            except Exception as e:
+                raise Exception("Failed to create sub-agent " + aid + " using " + str(parameters)) from e
 
     def step(self, state, reward=None, done=None):
         """
@@ -71,4 +74,3 @@ class ComplexAgentComponent(AtomicAgent):
         del newparams['agents'] 
         newparams.update(extraparams)
         return createAgent(classname, newid, self.getEnvironment(), newparams)
-
