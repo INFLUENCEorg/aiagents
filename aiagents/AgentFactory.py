@@ -2,7 +2,7 @@ from aienvs.Environment import Env
 from aiagents.AgentComponent import AgentComponent
 
 
-def createAgent(classname:str, agentId:str, environment:Env, parameters:dict) -> AgentComponent:
+def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     '''
     Create an agent from a given full path name
     @param classname the full.path.name to the agent to create, eg
@@ -12,8 +12,20 @@ def createAgent(classname:str, agentId:str, environment:Env, parameters:dict) ->
     @param parameters see AgentComponent __init__
     @return an initialized AgentComponent
     '''
+    classname=parameters['class']
+    class_parameters=parameters['parameters']
     klass = classForNameTyped(classname, AgentComponent)
-    obj = klass(agentId, environment, parameters)
+
+    if 'id' in parameters:
+        obj = klass(parameters['id'], environment, class_parameters)
+    elif 'subAgentList' in parameters:
+        subAgentList = []
+        for subAgentParameters in parameters['subAgentList']:
+            subAgentList.append(createAgent(environment, subAgentParameters))
+        obj = klass(subAgentList, class_parameters)
+    else:
+        raise "Misformatted agent parameters"
+
     return obj
 
 
