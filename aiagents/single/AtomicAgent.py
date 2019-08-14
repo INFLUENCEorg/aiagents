@@ -10,4 +10,13 @@ class AtomicAgent(AgentComponent):
     def __init__(self, agentId:str, environment:Env, parameters:dict=None):
         self._agentId = agentId
         self._environment = environment
+        self._parameters = parameters
 
+    def getAgentId(self):
+        return self._agentId
+    
+    def getEnvironment(self):
+        return self._environment
+
+    def getParameters(self):
+        return self._parameters
