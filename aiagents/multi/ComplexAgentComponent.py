@@ -62,6 +62,9 @@ class ComplexAgentComponent(AtomicAgent):
         logging.debug("Aggregate actions:" + str(actions))
         return actions
 
+    def getSubAgents(self) -> list:
+        return self._subAgents
+
     def _newAgent(self, newid:str, classname: str, extraparams:dict):
         """
         @param newid the id for the agent

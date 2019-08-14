@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from aiagents.AgentFactory import createAgent, classForName, classForNameTyped
 
 compoundclass = 'aiagents.multi.ComplexAgentComponent.ComplexAgentComponent'
+randomclass = 'aiagents.single.RandomAgent.RandomAgent'
 
 
 class testComplexAgentComponent(LoggedTestCase):
@@ -60,4 +61,21 @@ class testComplexAgentComponent(LoggedTestCase):
         with self.assertRaises(Exception) as context:
             createAgent(compoundclass, 'root', env, params)
         self.assertEquals("Failed to create sub-agent a using {'agents': {'a': {'classname': 'some.class', 'parameters': {}}}}" , str(context.exception))
- 
+
+    def test_smoke(self): 
+        env = Mock()
+        params = {'agents':
+                  {'a':{'classname':randomclass, 'parameters':{}}}
+                }
+        createAgent(compoundclass, 'root', env, params)
+        
+    def test_check_subparty(self): 
+        env = Mock()
+        params = {'agents':
+                  {'a':{'classname':randomclass, 'parameters':{}}}
+                }
+        agt = createAgent(compoundclass, 'root', env, params)
+        subs = agt.getSubAgents()
+        self.assertEquals(1, len(subs))
+        self.assertEquals('RandomAgent', type(subs[0]).__name__)
+        
