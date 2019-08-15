@@ -12,11 +12,3 @@ class AtomicAgent(AgentComponent):
         self._environment = environment
         self._parameters = parameters
 
-    def getAgentId(self):
-        return self._agentId
-    
-    def getEnvironment(self):
-        return self._environment
-
-    def getParameters(self):
-        return self._parameters
