@@ -5,15 +5,25 @@ from aiagents.AgentComponent import AgentComponent
 def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     '''
     Create an agent from a given full path name
-    @param classname the full.path.name to the agent to create, eg
-    "aiagents.single.RandomAgent.RandomAgent"
-    @param agentId see AgentComponent __init__
     @param environment see AgentComponent __init__
-    @param parameters see AgentComponent __init__
+    @param parameters this parameter is a dictionary. It must contain these keys
+    * 'class': the 'full.class.name' (str) of the agent to be loaded
+    * 'parameters': the subparameters (dict) to be passed into the agent.
+    * 'either 'id' or 'subAgentList' which fulfills two purposes:
+     1. It is used to guess the type of full.class.name that will be created,
+     so that the correct constructor can be called.
+     2. It can be used as parameter to recursively call createAgent
+     It works as follows
+     * If 'id':'name' is a key-value(str), it is assumed to be an AtomicAgent
+        and the agent will get 'name' as id.
+     * if 'subAgentList':[subparam1,...] is a key-value, it is assumed 
+       a ComplexAgent. createAgent will be (recursively) called 
+       for each subparam to create a list of subAgents.
+       These subAgents are then passed into the ComplexAgent constructor.
     @return an initialized AgentComponent
     '''
-    classname=parameters['class']
-    class_parameters=parameters['parameters']
+    classname = parameters['class']
+    class_parameters = parameters['parameters']
     klass = classForNameTyped(classname, AgentComponent)
 
     if 'id' in parameters:
