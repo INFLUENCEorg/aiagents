@@ -28,7 +28,9 @@ class testAgentFactory(LoggedTestCase):
 
     def test_smoke(self):
         env = Mock()
-        agent = createAgent('aiagents.single.RandomAgent.RandomAgent', 'entity1', env, {})
+        agent = createAgent(env, {'id': 'entity1',
+                                  'class':'aiagents.single.RandomAgent.RandomAgent',
+                                  'parameters':{}})
 
     def test_is_good_agent(self):
         actions = Mock()
@@ -37,7 +39,9 @@ class testAgentFactory(LoggedTestCase):
         env.action_space.spaces.get.return_value = actions
         state = Mock()
         
-        agent = createAgent('aiagents.single.RandomAgent.RandomAgent', 'entity1', env, {})
+        agent = createAgent(env, {'id': 'entity1',
+                                  'class':'aiagents.single.RandomAgent.RandomAgent',
+                                  'parameters':{}})
         action = agent.step(state)
         print('agent did action:' + str(action))
         self.assertTrue(['entity1'], action.keys())
