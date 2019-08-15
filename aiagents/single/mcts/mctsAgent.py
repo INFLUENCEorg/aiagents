@@ -15,10 +15,10 @@ class MctsAgent(AtomicAgent):
         'explorationConstant': 1 / math.sqrt(2),
         'samplingLimit': 20}}
 
-    def __init__(self, agentId, environment: Env, parameters: dict, otherAgents=None, treeAgent=None, rolloutAgent=None): 
+    def __init__(self, agentId, environment: Env, parameters: dict): 
         """
         @param parameters dict that must contain keys 'otherAgents', 'treeAgent' and 'rolloutAgent'
-        'otherAgents' must map to a list of dict objects for a call to createAgents
+        'otherAgents' must map to a (possibly empty) list of dict objects for a call to createAgents
         'treeAgent' and 'rolloutAgent' must map to a dict object for a call to createAgent
         """
         super().__init__(agentId, environment, parameters)
