@@ -2,7 +2,7 @@ from aienvs.runners.Episode import Episode
 import copy
 import logging
 import math
-from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
+from aiagents.multi.BasicComplexAgent import BasicComplexAgent
 import random
 
 
