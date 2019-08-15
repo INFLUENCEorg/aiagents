@@ -6,15 +6,21 @@ from aiagents.single.mcts.nodes import RootNode
 from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
 from aienvs.Environment import Env
 import math
+from aiagents.single.AtomicAgent import AtomicAgent
 
 
-class MctsAgent():
-    DEFAULT_PARAMETERS = {'treeParameters': {'explorationConstant': 1 / math.sqrt(2), 'samplingLimit': 20}}
+class MctsAgent(AtomicAgent):
+    DEFAULT_PARAMETERS = {'treeParameters': {
+        'explorationConstant': 1 / math.sqrt(2),
+        'samplingLimit': 20}}
 
     def __init__(self, agentId, environment: Env, parameters: dict, otherAgents=None, treeAgent=None, rolloutAgent=None): 
         """
-        TBA
+        @param parameters dict that must contain keys 'otherAgents', 'treeAgent' and 'rolloutAgent'
+        'otherAgents' must map to a list of dict objects for a call to createAgents
+        'treeAgent' and 'rolloutAgent' must map to a dict object for a call to createAgent
         """
+        super().__init__(agentId, environment, parameters)
         self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
         self._parameters.update(parameters)
         self.agentId = agentId

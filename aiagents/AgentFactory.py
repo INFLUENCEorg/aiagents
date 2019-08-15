@@ -29,14 +29,24 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     if 'id' in parameters:
         obj = klass(parameters['id'], environment, class_parameters)
     elif 'subAgentList' in parameters:
-        subAgentList = []
-        for subAgentParameters in parameters['subAgentList']:
-            subAgentList.append(createAgent(environment, subAgentParameters))
+        subAgentList = createAgents(environment, parameters['subAgentList'])
         obj = klass(subAgentList, class_parameters)
     else:
-        raise "Misformatted agent parameters"
+        raise "parameters does not contain key 'id' or 'subAgentList'"
 
     return obj
+
+
+def createAgents(environment:Env, parameterslist:list) -> list:  # <AgentComponent>:
+    '''
+    calls createAgent for each 
+    @param parameterslist: a list of parameter objects as needed for a call to createAgent
+    @return: a list of AgentComponents, in same order as given in the parameterslist.
+    '''
+    subAgentList = []
+    for subAgentParameters in parameterslist:
+        subAgentList.append(createAgent(environment, subAgentParameters))
+    return subAgentList
 
 
 def classForNameTyped(klsname:str, expectedkls):
