@@ -32,7 +32,7 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
         subAgentList = createAgents(environment, parameters['subAgentList'])
         obj = klass(subAgentList, class_parameters)
     else:
-        raise "parameters does not contain key 'id' or 'subAgentList'"
+        raise Exception("parameters " + str(parameters) + " does not contain key 'id' or 'subAgentList'")
 
     return obj
 
