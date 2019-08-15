@@ -7,7 +7,7 @@ from aiagents.multi.BasicComplexAgent import BasicComplexAgent
 from aienvs.Environment import Env
 import math
 from aiagents.single.AtomicAgent import AtomicAgent
-from aiagents.AgentFactory import createAgent, createAgents
+from aiagents.AgentFactory import createAgent
 
 
 class MctsAgent(AtomicAgent):
@@ -45,12 +45,12 @@ class MctsAgent(AtomicAgent):
         self._simulator = copy.deepcopy(environment)
 
         self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
-        # RandomAgent(self.agentId, self._simulator)
-        
         self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
-        # RandomAgent(self.agentId, self._simulator)
-        
-        self._otherAgents = createAgents(self._simulator, parameters['otherAgents'])
+
+        if parameters['otherAgents'] is not None:
+            self._otherAgents = createAgent(self._simulator, parameters['otherAgents'])
+        else:
+            self._otherAgents = None
        
     def step(self, observation, reward, done):
         if done:

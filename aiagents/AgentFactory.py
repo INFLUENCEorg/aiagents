@@ -1,6 +1,6 @@
 from aienvs.Environment import Env
 from aiagents.AgentComponent import AgentComponent
-
+import logging
 
 def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     '''
@@ -22,6 +22,7 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
        These subAgents are then passed into the ComplexAgent constructor.
     @return an initialized AgentComponent
     '''
+    logging.debug(parameters)
     classname = parameters['class']
     class_parameters = parameters['parameters']
     klass = classForNameTyped(classname, AgentComponent)
@@ -29,24 +30,14 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     if 'id' in parameters:
         obj = klass(parameters['id'], environment, class_parameters)
     elif 'subAgentList' in parameters:
-        subAgentList = createAgents(environment, parameters['subAgentList'])
+        subAgentList = []
+        for subAgentParameters in parameters['subAgentList']:
+            subAgentList.append(createAgent(environment, subAgentParameters))
         obj = klass(subAgentList, class_parameters)
     else:
         raise Exception("parameters " + str(parameters) + " does not contain key 'id' or 'subAgentList'")
 
     return obj
-
-
-def createAgents(environment:Env, parameterslist:list) -> list:  # <AgentComponent>:
-    '''
-    calls createAgent for each 
-    @param parameterslist: a list of parameter objects as needed for a call to createAgent
-    @return: a list of AgentComponents, in same order as given in the parameterslist.
-    '''
-    subAgentList = []
-    for subAgentParameters in parameterslist:
-        subAgentList.append(createAgent(environment, subAgentParameters))
-    return subAgentList
 
 
 def classForNameTyped(klsname:str, expectedkls):
