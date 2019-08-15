@@ -1,7 +1,7 @@
 from aiagents.multi.ComplexAgent import ComplexAgent
 import logging
 
-class ComplexAgentComponent(ComplexAgent):
+class BasicComplexAgent(ComplexAgent):
     """
     A basic complex agent has a list of subcomponents that it needs to iterate through
     This simple class provides a method for brute force iteration of subcomponents

@@ -3,7 +3,7 @@ import copy
 import logging
 from aiagents.single.RandomAgent import RandomAgent
 from aiagents.single.mcts.nodes import RootNode
-from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
+from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
 from aienvs.Environment import Env
 import math
 

@@ -2,7 +2,7 @@ from aienvs.runners.Episode import Episode
 import copy
 import logging
 import math
-from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
+from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
 import random
 
 class TreeNode():
@@ -172,7 +172,7 @@ class ActionNode(TreeNode):
 
     def _rollout(self, simulator, state, reward, done, otherAgents):
         #removes Nones from the list
-        jointAgent = ComplexAgentComponent( list(filter(None.__ne__, [self.rolloutAgent, self.otherAgents])) )
+        jointAgent = BasicComplexAgent( list(filter(None.__ne__, [self.rolloutAgent, self.otherAgents])) )
         rolloutEpisode = Episode( jointAgent, simulator, state )
         steps, rolloutReward = rolloutEpisode.run()
         return rolloutReward

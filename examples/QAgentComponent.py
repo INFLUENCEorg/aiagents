@@ -1,4 +1,4 @@
-from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
+from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
 from aiagents.single.RandomAgent import RandomAgent
 from aiagents.QAgentComponent import QAgentComponent
 import random
@@ -53,7 +53,7 @@ def main():
         simpleComponentList.append(RandomQAgent(i, action_space))
         i+=1
 
-    myComplexComponent=ComplexAgentComponent(simpleComponentList)
+    myComplexComponent=BasicComplexAgent(simpleComponentList)
 
     N_steps=6
     i=0

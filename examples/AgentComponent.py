@@ -1,4 +1,4 @@
-from aiagents.multi.ComplexAgentComponent import ComplexAgentComponent
+from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
 from aiagents.single.RandomAgent import RandomAgent
 from gym.spaces import Discrete
 import logging
@@ -17,7 +17,7 @@ def main():
         simpleComponentList.append(RandomAgent(i, action_space))
         i+=1
 
-    myComplexComponent=ComplexAgentComponent(simpleComponentList)
+    myComplexComponent=BasicComplexAgent(simpleComponentList)
 
     N_steps=3
     i=0
