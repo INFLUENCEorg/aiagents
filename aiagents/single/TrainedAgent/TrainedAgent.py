@@ -1,26 +1,23 @@
-from aiagents.single.TrainedAgent.Preprocessor import FactoryFloorPreprocessor
-from aiagents.single.TrainedAgent.Predictor import Predictor
+from aiagents.single.AtomicAgent import AtomicAgent
+from keras.models import load_model
+# TODO: make it extensible to other environments
+from aienvs.FactoryFloor.FactoryFloorState import FactoryFloorState, encodeStateAsArray
+import numpy as np
 
 class TrainedAgent(AtomicAgent):
-    DEFAULT_PARAMETERS = {}
-
-    def __init__(self, agentId, environment: Env, parameters: dict): 
+    def __init__(self, agentId, environment: FactoryFloor, parameters: dict): 
         """
         TBA
         """
-        self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
-        self._parameters.update(parameters)
-        self.agentId = agentId
-
-        self._preprocessor = FactoryFloorPreprocessor(agentId)
-        self._predictor = Predictor(self._parameters['predictor']) 
-
-    def train(self, data):
-        processed_data = self._preprocessor.format(data)
-        self._predictor.train(processed_data)
+        super.__init__(agentId, environment, parameters)
+        self._model = load_model(parameters["modelFile"])
        
-    def step(self, observation, reward, done):
-        processed_observation = self._preprocessor.format(observation)
-        action = self._predictor.forward(processed_observation)
+    def step(self, observation: FactoryFloorState, reward=None, done=None):
+        image = encodeStateAsArray(observation)
+        image_aug = np.expand_dims(image, axis=0)
+        # softmax probabilities
+        probabilities = self._model.predict(image_aug, batch_size=1)
+        action = np.argmax(probabilities)
+
         return action
 
