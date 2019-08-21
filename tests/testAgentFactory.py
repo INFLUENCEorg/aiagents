@@ -1,8 +1,9 @@
 from .LoggedTestCase import LoggedTestCase
 from aienvs.Environment import Env
 from unittest.mock import Mock
-from aiagents.AgentFactory import createAgent, classForName, classForNameTyped
+from aiagents.AgentFactory import createAgent, classForName, classForNameTyped, resolve
 import datetime
+# import os
 
 
 class testAgentFactory(LoggedTestCase):
@@ -29,7 +30,7 @@ class testAgentFactory(LoggedTestCase):
     def test_smoke(self):
         env = Mock()
         agent = createAgent(env, {'id': 'entity1',
-                                  'class':'aiagents.single.RandomAgent.RandomAgent',
+                                  'class':'RandomAgent',
                                   'parameters':{}})
 
     def test_is_good_agent(self):
@@ -40,9 +41,16 @@ class testAgentFactory(LoggedTestCase):
         state = Mock()
         
         agent = createAgent(env, {'id': 'entity1',
-                                  'class':'aiagents.single.RandomAgent.RandomAgent',
+                                  'class':'RandomAgent',
                                   'parameters':{}})
         action = agent.step(state)
         print('agent did action:' + str(action))
         self.assertTrue(['entity1'], action.keys())
-        
+
+    def test_resolve_nonexisting(self):
+        self.assertRaises(Exception, resolve, 'UnknownAgent', 'aiagents')
+    
+    def test_resolve_RandomAgent(self):
+        self.assertEquals('aiagents.single.RandomAgent.RandomAgent', resolve('RandomAgent', 'aiagents'))
+        # self.assertEquals('aiagents.single.RandomAgent.RandomAgent', resolve('RandomAgent', os.environ['AIAGENTS_HOME'] + '/aiagents'))
+         

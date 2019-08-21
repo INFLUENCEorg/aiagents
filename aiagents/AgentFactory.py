@@ -1,13 +1,17 @@
 from aienvs.Environment import Env
 from aiagents.AgentComponent import AgentComponent
 import logging
+import glob
+import os
+
 
 def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     '''
     Create an agent from a given full path name
     @param environment see AgentComponent __init__
     @param parameters this parameter is a dictionary. It must contain these keys
-    * 'class': the 'full.class.name' (str) of the agent to be loaded
+    * 'class': the class name (str) of the agent to be loaded.
+      The class will be resolved by resolve from the aiagents directory.
     * 'parameters': the subparameters (dict) to be passed into the agent.
     * 'either 'id' or 'subAgentList' which fulfills two purposes:
      1. It is used to guess the type of full.class.name that will be created,
@@ -23,7 +27,7 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     @return an initialized AgentComponent
     '''
     logging.debug(parameters)
-    classname = parameters['class']
+    classname = resolve(parameters['class'], 'aiagents')
     class_parameters = parameters['parameters']
     klass = classForNameTyped(classname, AgentComponent)
 
@@ -38,6 +42,23 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
         raise Exception("parameters " + str(parameters) + " does not contain key 'id' or 'subAgentList'")
 
     return obj
+
+
+def resolve(shortname:str, basepath: str):
+    """
+    @shortname the name of the class needed eg 'RandomParty'
+    @basepath the directory where to start the search, eg 'aiagents'
+    @returns a full class name 'aiagents.single.RandomAgent.RandomAgent'.
+    The procedure is to search recursively through all subdirs of the given basepath
+    until a file with given shortname is found. It is assumed that this
+    file contains the requested class as well
+    """
+    items = glob.glob(basepath + "/**/" + shortname + ".py", recursive=True)
+    if len(items) == 0:
+        raise Exception("No candidate find to resolve " + shortname)
+    if len(items) != 1:
+        raise Exception("Resolve failed of " + shortname + ": multiple candidates " + str(items))
+    return items[0][:-3].replace('/', '.') + "." + shortname
 
 
 def classForNameTyped(klsname:str, expectedkls):
