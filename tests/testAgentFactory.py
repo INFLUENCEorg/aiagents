@@ -30,7 +30,7 @@ class testAgentFactory(LoggedTestCase):
     def test_smoke(self):
         env = Mock()
         agent = createAgent(env, {'id': 'entity1',
-                                  'class':'RandomAgent',
+                                  'class':'aiagents.single.RandomAgent.RandomAgent',
                                   'parameters':{}})
 
     def test_is_good_agent(self):
@@ -41,7 +41,7 @@ class testAgentFactory(LoggedTestCase):
         state = Mock()
         
         agent = createAgent(env, {'id': 'entity1',
-                                  'class':'RandomAgent',
+                                  'class':'aiagents.single.RandomAgent.RandomAgent',
                                   'parameters':{}})
         action = agent.step(state)
         print('agent did action:' + str(action))
