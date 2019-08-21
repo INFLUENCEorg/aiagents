@@ -27,7 +27,8 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     @return an initialized AgentComponent
     '''
     logging.debug(parameters)
-    classname = resolve(parameters['class'], 'aiagents')
+    classname = parameters['class']
+    # classname = resolve(parameters['class'], 'aiagents')
     class_parameters = parameters['parameters']
     klass = classForNameTyped(classname, AgentComponent)
 
