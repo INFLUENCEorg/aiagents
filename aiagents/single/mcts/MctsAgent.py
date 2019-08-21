@@ -22,8 +22,8 @@ class MctsAgent(AtomicAgent):
         'treeAgent' and 'rolloutAgent' must map to a dict object for a call to createAgent
         """
         super().__init__(agentId, environment, parameters)
-        if not ('treeAgent' in parameters and 'rolloutAgent' in parameters and 'otherAgents' in parameters):
-            raise "parameters does not contain 'treeAgent', 'rolloutAgent' and 'otherAgents':" + str(parameters)
+        if not ('treeAgent' in parameters and 'rolloutAgent' in parameters):
+            raise "parameters does not contain 'treeAgent', 'rolloutAgent':" + str(parameters)
         self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
         self._parameters.update(parameters)
         self.agentId = agentId
@@ -47,7 +47,7 @@ class MctsAgent(AtomicAgent):
         self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
         self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
 
-        if parameters['otherAgents'] is not None:
+        if 'otherAgents' in parameters:
             self._otherAgents = createAgent(self._simulator, parameters['otherAgents'])
         else:
             self._otherAgents = None

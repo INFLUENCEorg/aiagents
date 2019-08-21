@@ -1,4 +1,4 @@
-from aiagents.multi.ComplexAgentComponent import BasicComplexAgent
+from aiagents.multi.BasicComplexAgent import BasicComplexAgent
 from aiagents.single.RandomAgent import RandomAgent
 from aiagents.QAgentComponent import QAgentComponent
 import random
