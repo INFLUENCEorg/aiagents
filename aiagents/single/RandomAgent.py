@@ -12,7 +12,7 @@ class RandomAgent(AtomicAgent):
     """
     def __init__(self, agentId:str, environment:Env, parameters:dict=None):
         super().__init__( agentId, environment, parameters )
-        self.action_space = DecoratedSpace.create(environment.action_space.get(self._agentId))
+        self.action_space = DecoratedSpace.create(environment.action_space.getSubSpace(self._agentId))
 
 
     def step(self, state, reward=None, done=None):
