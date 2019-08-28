@@ -12,7 +12,7 @@ class RandomAgent(AtomicAgent):
     """
     def __init__(self, agentId:str, environment:Env, parameters:dict=None):
         super().__init__( agentId, environment, parameters )
-        self.action_space = DecoratedSpace.create(environment.action_space)
+        self.action_space = DecoratedSpace.create(environment.action_space.get(self._agentId))
 
 
     def step(self, state, reward=None, done=None):
@@ -20,7 +20,7 @@ class RandomAgent(AtomicAgent):
         Selects just a single random action, wraps in a single element agentId:actionId dictionary
         """
         actions = dict()
-        action = random.randint(0, self.action_space.get(self._agentId).getSize()-1)
+        action = random.randint(0, self.action_space.getSize()-1)
         actions.update({self._agentId: action })
 
         logging.debug("Id / action:" + str(actions))
