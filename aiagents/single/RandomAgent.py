@@ -20,7 +20,7 @@ class RandomAgent(AtomicAgent):
         Selects just a single random action, wraps in a single element agentId:actionId dictionary
         """
         actions = dict()
-        action = random.randint(0, self.action_space.get(self.agentId).getSize()-1)
+        action = random.randint(0, self.action_space.get(self._agentId).getSize()-1)
         actions.update({self._agentId: action })
 
         logging.debug("Id / action:" + str(actions))
