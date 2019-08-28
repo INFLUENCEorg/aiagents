@@ -89,7 +89,7 @@ class StateNode(TreeNode):
 
         expandedNode = self._children[key].expand()
 
-        if self.simulator.action_space.spaces.get(self.agentId).n <= len(self._children.values()):
+        if self.simulator.action_space.getSize() <= len(self._children.values()):
             self.isFullyExpanded = all([_childActionNode.isFullyExpanded for _childActionNode in self._children.values()])
 
         return expandedNode

@@ -5,6 +5,8 @@ from aiagents.single.RandomAgent import RandomAgent
 from aiagents.single.mcts.nodes import RootNode
 from aiagents.multi.BasicComplexAgent import BasicComplexAgent
 from aienvs.Environment import Env
+from aienvs.gym.ModifiedGymEnv import ModifiedGymEnv
+from aienvs.gym.DecoratedSpace import DecoratedSpace
 import math
 from aiagents.single.AtomicAgent import AtomicAgent
 from aiagents.AgentFactory import createAgent
@@ -42,7 +44,7 @@ class MctsAgent(AtomicAgent):
                 raise ValueError("Iteration limit must be greater than one")
             self._limitType = 'iterations'
 
-        self._simulator = copy.deepcopy(environment)
+        self._simulator = ModifiedGymEnv(copy.deepcopy(environment), DecoratedSpace.create(copy.deepcopy(environment.action_space)))
 
         self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
         self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
