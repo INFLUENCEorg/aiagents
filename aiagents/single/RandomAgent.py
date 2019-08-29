@@ -12,8 +12,8 @@ class RandomAgent(AtomicAgent):
     """
     def __init__(self, agentId:str, environment:Env, parameters:dict=None):
         super().__init__( agentId, environment, parameters )
-        self.action_space = DecoratedSpace.create(environment.action_space.getSubSpace(self._agentId))
-
+        full_action_space = DecoratedSpace.create(environment.action_space)
+        self.action_space=full_action_space.get(agentId)
 
     def step(self, state, reward=None, done=None):
         """
@@ -26,4 +26,3 @@ class RandomAgent(AtomicAgent):
         logging.debug("Id / action:" + str(actions))
 
         return actions
-
