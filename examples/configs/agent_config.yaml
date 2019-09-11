@@ -8,7 +8,7 @@ config:
   - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
     #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
     # - &RobotAgent aiagents.single.RandomAgent.RandomAgent
-  - &timeLimit 2
+  - &iterationLimit 500
   - &explorationConstant 10
   - &samplingLimit 20
 
@@ -38,7 +38,7 @@ parameters:
                       - class: *FactoryFloorAgent
                         id: "robot3"
                         parameters: {}
-              timeLimit: *timeLimit
+              iterationLimit: *iterationLimit
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
@@ -63,7 +63,7 @@ parameters:
                       - class: *FactoryFloorAgent
                         id: "robot3"
                         parameters: {}
-              timeLimit: *timeLimit
+              iterationLimit: *iterationLimit
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
@@ -88,7 +88,7 @@ parameters:
                       - class: *FactoryFloorAgent
                         id: "robot2"
                         parameters: {}
-              timeLimit: *timeLimit
+              iterationLimit: *iterationLimit
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
