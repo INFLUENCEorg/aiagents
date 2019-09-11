@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from aiagents.AgentFactory import createAgent, classForName, classForNameTyped, resolve
 import datetime
 # import os
+from gym.spaces import Dict, Discrete
 
 
 class testAgentFactory(LoggedTestCase):
@@ -28,16 +29,26 @@ class testAgentFactory(LoggedTestCase):
         self.assertRaises(Exception, classForNameTyped, "datetime.datetime", Env)
 
     def test_smoke(self):
+        actions = Mock(spec=Discrete)
+        actions.n = 10
         env = Mock()
+        actspace = Mock(spec=Dict)
+        spacesmock = { 'entity1':actions}
+        actspace.spaces = spacesmock
+        env.action_space = actspace
+
         agent = createAgent(env, {'id': 'entity1',
                                   'class':'aiagents.single.RandomAgent.RandomAgent',
                                   'parameters':{}})
 
     def test_is_good_agent(self):
-        actions = Mock()
+        actions = Mock(spec=Discrete)
         actions.n = 10
         env = Mock()
-        env.action_space.spaces.get.return_value = actions
+        actspace = Mock(spec=Dict)
+        spacesmock = { 'entity1':actions}
+        actspace.spaces = spacesmock
+        env.action_space = actspace
         state = Mock()
         
         agent = createAgent(env, {'id': 'entity1',
