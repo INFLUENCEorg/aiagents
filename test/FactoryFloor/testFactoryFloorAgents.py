@@ -6,6 +6,7 @@ from test.LoggedTestCase import LoggedTestCase
 from aienvs.FactoryFloor.FactoryFloor import FactoryFloor
 from aiagents.single.PPO.PPOAgent import PPOAgent
 from aiagents.single.RandomAgent import RandomAgent
+from aiagents.single.FactoryFloorAgent import FactoryFloorAgent
 from aiagents.single.mcts.MctsAgent import MctsAgent
 from aiagents.AgentComponent import AgentComponent
 from aiagents.multi.BasicComplexAgent import BasicComplexAgent
@@ -25,7 +26,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-class testFactoryFloor(LoggedTestCase):
+class testFactoryFloorAgents(LoggedTestCase):
     """
     This is an integration test that also tests aiagents.
     """
@@ -86,7 +87,20 @@ class testFactoryFloor(LoggedTestCase):
 
         while steps < parameters["max_steps"]:
             steps += Episode(complexAgent, env, env.action_space.sample()).run()
-        
+ 
+    def test_FactoryFloorAgent(self):
+        logging.info("Starting test factoryfloor agent")
+        dirname = os.path.dirname(__file__)
+        filename = os.path.join(dirname, "../configs/factory_floor_simple.yaml")
+        parameters = getParameters(filename)
+
+        env = FactoryFloor(parameters)
+        randomAgents = []
+        for robotId in env.action_space.spaces.keys():
+            randomAgents.append(FactoryFloorAgent(robotId, env, parameters))
+        complexAgent = BasicComplexAgent(randomAgents)
+        Experiment(complexAgent, env, 1000, None, True).run()       
+
 
 if __name__ == '__main__':
     unittest.main()
