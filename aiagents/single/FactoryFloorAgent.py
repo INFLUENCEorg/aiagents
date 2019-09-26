@@ -21,10 +21,14 @@ class FactoryFloorAgent(AtomicAgent):
         # inverting the key action pairs for meaningful navigation
         self._ACTIONS = dict(zip(environment.ACTIONS.values(), environment.ACTIONS.keys()))
         self._graph = FactoryGraph(environment.getMap())
-        self._mapping = { "[0 1]":self._ACTIONS.get("UP"),
-                         "[0 -1]":self._ACTIONS.get("DOWN"),
+        self._mapping = { "[0 -1]":self._ACTIONS.get("UP"),
+                         '[ 0 -1]':self._ACTIONS.get("UP"),
+                         "[0 1]":self._ACTIONS.get("DOWN"),
+                         '[ 0 1]':self._ACTIONS.get("DOWN"),
                          "[-1 0]":self._ACTIONS.get("LEFT"),
-                         "[1 0]":self._ACTIONS.get("RIGHT")
+                         '[-1  0]':self._ACTIONS.get("LEFT"),
+                         "[1 0]":self._ACTIONS.get("RIGHT"),
+                         '[1  0]':self._ACTIONS.get("RIGHT")
                          }
 
     def step(self, state: FactoryFloorState, reward=None, done=None) -> spaces.Dict:
@@ -52,10 +56,10 @@ class FactoryFloorAgent(AtomicAgent):
         if (targetTask.getPosition() == robot.getPosition()).all():
             action = {self._agentId: self._ACTIONS.get("ACT")}
         else:
-            path = networkx.shortest_path(self._graph, source=str(robotpos), target=str(taskpos))
+            path = networkx.shortest_path(self._graph, source=str(robotpos), target=str(targetTask.getPosition()))
             delta = self._toarray(path[1]) - self._toarray(path[0])
             action = {self._agentId:self._mapping.get(str(delta))}
-
+        
         logging.debug(action)
         return action
     

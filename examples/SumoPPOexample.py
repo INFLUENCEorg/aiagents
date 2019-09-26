@@ -46,7 +46,7 @@ def main():
     complexAgent = BasicComplexAgent(PPOAgents)
     
     # experiment is a sequence of episodes with same agents and
-    experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=True)
+    experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=False)
     experiment.addListener(JsonLogger(logoutput))
     experiment.run()
 

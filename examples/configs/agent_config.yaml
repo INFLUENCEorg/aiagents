@@ -6,8 +6,8 @@ aliases:
 
 config:
   - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
-    #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
-    # - &RobotAgent aiagents.single.RandomAgent.RandomAgent
+  #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+    #- &RobotAgent aiagents.single.RandomAgent.RandomAgent
   - &iterationLimit 500
   - &explorationConstant 10
   - &samplingLimit 20
