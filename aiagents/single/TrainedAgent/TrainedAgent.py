@@ -28,14 +28,12 @@ class TrainedAgent(AtomicAgent):
             logging.error("Agent " + str(agentId) + " using backup agent")
 
         super().__init__(agentId, environment, parameters)
-        self._observationWidth=environment.observation_space.nvec[1]
-        self._observationHeight=environment.observation_space.nvec[2]
        
     def step(self, observation: FactoryFloorState, reward=None, done=None):
         if self._subAgent is not None:
             return self._subAgent.step(observation, reward, done)
 
-        image = encodeStateAsArray(state=observation, width=self._observationWidth, height=self._observationHeight, currentRobotId=self._agentId)
+        image = encodeStateAsArray(state=observation)
         image_aug = np.expand_dims(image, axis=0)
         # softmax probabilities
         probabilities = self._model.predict(image_aug, batch_size=1)
@@ -45,4 +43,38 @@ class TrainedAgent(AtomicAgent):
         logging.debug("PREDICTION ACTION " + str(action) + " FOR AGENT " + str(self._agentId))
 
         return {self._agentId: action}
+
+
+class TabularAgent(AtomicAgent):
+    def __init__(self, agentId, environment: FactoryFloor, parameters: dict): 
+        """
+        TBA
+        """
+        try:
+            self._model = parameters["model"] # model is a dictionary states to actions
+        except KeyError:
+            with open(parameters["modelFile"], 'r') as stream:
+                try:
+                    self._model = yaml.safe_load(stream)['model']
+                except yaml.YAMLError as exc:
+                    logging.error(exc)
+
+        backupClassDictionary = {}
+        backupClassDictionary["id"]=agentId
+        backupClassDictionary["class"]=parameters["backupClass"]
+        backupClassDictionary["parameters"]=parameters["backupClassParameters"]
+        self._subAgent = createAgent(environment, backupClassDictionary)
+
+        super().__init__(agentId, environment, parameters)
+       
+    def step(self, observation: FactoryFloorState, reward=None, done=None):
+        image = encodeStateAsArray(state=observation)
+        try: 
+            action = model.predict(image)
+        except:
+            logging.error("Model predict is None")
+            return self._subAgent.step(observation, reward, done)
+        
+        return {self._agentId: action}
+
 

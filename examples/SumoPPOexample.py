@@ -39,13 +39,11 @@ def main():
 
     # here we initialize all agents (in that case one)
     PPOAgents = []
-    # only to get the observation space, not a real run
     env.reset()
     for intersectionId in env.action_space.spaces.keys():
         PPOAgents.append(PPOAgent(agentId=intersectionId, environment=env, parameters=parameters['all']))
     complexAgent = BasicComplexAgent(PPOAgents)
     
-    # experiment is a sequence of episodes with same agents and
     experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=False)
     experiment.addListener(JsonLogger(logoutput))
     experiment.run()

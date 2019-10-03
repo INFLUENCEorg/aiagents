@@ -1,6 +1,6 @@
 parameters:
-  all: # Should be split between environment and agent parameters
-    # Common hyperparameters
+  all:  
+  # Common hyperparameters
     mode: 'train'
     load: false
     name: 'model5_6cars'
@@ -38,7 +38,7 @@ parameters:
     resolutionInPixelsPerMeterY: 0.25
     car_tm: 6
     state_type: 'ldm_state' # The type of state to use as input for the network. ('bin' (Position Matrix), 'bin_light' (Position Light Matrix), 'value' (Value Matrix))
-    scaling_factor: 10
+    scaling_factor: 10 # for rescaling reward
     fast: false
     speed_dev: 0.0 # Can be used to vary the speeds of cars, according to a normal distribution with mean 1 and standard deviation speed_dev (SUMOs default is 0.1)
     car_pr: 1.0
@@ -50,7 +50,6 @@ parameters:
     route_min_segments: 1
     local_rewards: True
     waiting_penalty: False
-    new_reward: True
     lightPositions: {"0": [[37.5,44.16], [39.2,44.16], [32.5,37.5], [32.5,39.16]]}
 
     # MAIN MODEL

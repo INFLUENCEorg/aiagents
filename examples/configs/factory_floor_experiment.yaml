@@ -6,9 +6,9 @@ parameters:
     environment:
         steps: 10
         robots: #initial robot positions
-          - id: 'robot1'
-            pos: 'random'
           - id: 'robot2'
+            pos: 'random'
+          - id: 'robot1'
             pos: 'random' 
           - id: 'robot3'
             pos: 'random' 
