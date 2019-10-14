@@ -1,10 +1,11 @@
 from aiagents.single.AtomicAgent import AtomicAgent
 from keras.models import load_model
 # TODO: make it extensible to other environments
-from aienvs.FactoryFloor.FactoryFloorState import FactoryFloorState, encodeStateAsArray
+from aienvs.FactoryFloor.FactoryFloorState import FactoryFloorState, encodeStateAsArray, toTuple
 from aienvs.FactoryFloor.FactoryFloor import FactoryFloor
 from aiagents.AgentFactory import createAgent
 import numpy as np
+import yaml
 import logging
 
 #logger = logging.getLogger()
@@ -50,14 +51,19 @@ class TabularAgent(AtomicAgent):
         """
         TBA
         """
+     #   try:
+     #       self._model = parameters["model"] # model is a dictionary states to actions
+     #   except KeyError:
         try:
-            self._model = parameters["model"] # model is a dictionary states to actions
-        except KeyError:
             with open(parameters["modelFile"], 'r') as stream:
                 try:
-                    self._model = yaml.safe_load(stream)['model']
+                    self._model = yaml.load(stream)
                 except yaml.YAMLError as exc:
+                    breakpoint()
                     logging.error(exc)
+        except FileNotFoundError:
+            print("No agent files available yet")
+            self._model={}
 
         backupClassDictionary = {}
         backupClassDictionary["id"]=agentId
@@ -68,12 +74,17 @@ class TabularAgent(AtomicAgent):
         super().__init__(agentId, environment, parameters)
        
     def step(self, observation: FactoryFloorState, reward=None, done=None):
-        image = encodeStateAsArray(state=observation)
+        state = toTuple(encodeStateAsArray(state=observation))
         try: 
-            action = model.predict(image)
-        except:
-            logging.error("Model predict is None")
+            action = self._model[state]
+            print("PREDICTED ACTION " + str(action) + " STATE " + str(state))
+        except KeyError:
+            print("NONE")
+            #logging.error("Model predict is None")
             return self._subAgent.step(observation, reward, done)
+        except AttributeError:
+            print("ATTR ERROR")
+            breakpoint()
         
         return {self._agentId: action}
 
