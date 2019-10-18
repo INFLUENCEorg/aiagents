@@ -17,6 +17,7 @@ class Q_function(object):
         self.b_s = parameters["batch_size"]
         self.lr = parameters["learning_rate"]
         self.freeze_interval = parameters["freeze_interval"]
+        self.summary_frequency = parameters["summary_frequency"]
         self.gamma = parameters["gamma"]
         self.weight_decay = 0.0
         self.init_func = self.initializer('xu', 0.0)
@@ -35,6 +36,7 @@ class Q_function(object):
             with tf.variable_scope('optimizer'):
                 self.learning_rate = tf.placeholder(tf.float32, name='learning_rate')
                 self.updates = tf.train.AdamOptimizer(self.learning_rate)
+            self.summaries = tf.summary.merge_all()
         self.sess = tf.Session(graph=self.graph)
 
     def initializer(self, initialization_type, init_param):

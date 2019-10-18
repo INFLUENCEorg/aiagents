@@ -89,13 +89,12 @@ class DeepQNetwork(Q_function):
         var_dict = {self.states: states, self.next_states: next_states, self.actions: actions,
                     self.rewards: rewards, self.learning_rate: self.lr, self.batch_size: self.b_s}
 
-        # forget about summary
-        # Calculate action network outputs
-        # if self.update_counter % 1000 == 0:
-        #     # Only write the summaries every 1000 steps.
+        # if self.update_counter % self.summary_frequency == 0:
         #     summary, _ = self.sess.run([self.summaries, self.opt_operation], feed_dict=var_dict)
         #     self.train_writer.add_summary(summary, self.update_counter)
         # else:
+        
+        # no summary at the moment
         self.sess.run(self.opt_operation, feed_dict=var_dict)
         self.update_counter += 1
 

@@ -27,7 +27,7 @@ def main():
         filename = configName
     else:
         print("Default config ")
-        configName = "./configs/new_traffic_loop_dqn.yaml"
+        configName = "./configs/one_grid_dqn.yaml"
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, configName)
 

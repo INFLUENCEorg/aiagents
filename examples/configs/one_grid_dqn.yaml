@@ -1,8 +1,6 @@
 parameters:
   all:
-    """
-    define the learning agent
-    """
+    # define the learning agent
     mode: 'train'
     load: false
     name: 'DQN_Test'
@@ -32,16 +30,12 @@ parameters:
     episode: 0
     seedlist: [43, 44, 45]
 
-    """
-    DQN only
-    """
+    # DQN only
     freeze_interval: 30000
     double_dqn: True
     epsilon: 0.1
 
-    """
-    define the SUMO simulation scenario
-    """
+    # define the SUMO simulation scenario
     box_bottom_corner: [9, 13]
     box_top_corner: [65, 69]
     y_t: 6 # Yellow (traffic light) time
