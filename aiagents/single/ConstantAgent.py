@@ -6,4 +6,4 @@ class ConstantAgent(AtomicAgent):
         super().__init__(agentId, environment, parameters)
 
     def step(self, observation, reward, done):
-        return {self._agentId: action}
+        return {self._agentId: self._action}

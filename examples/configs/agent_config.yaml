@@ -9,8 +9,9 @@ config:
   #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
     #- &RobotAgent aiagents.single.RandomAgent.RandomAgent
   - &iterationLimit 500
-  - &explorationConstant 10
-  - &samplingLimit 20
+  - &explorationConstant 1
+  - &samplingLimit 30
+  - &maxSteps 10
 
 # do not edit here
 parameters:
@@ -42,6 +43,7 @@ parameters:
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
+                  maxSteps: *maxSteps
           - class: *RobotAgent
             id: "robot2"
             parameters:
@@ -67,6 +69,7 @@ parameters:
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
+                  maxSteps: *maxSteps
           - class: *RobotAgent
             id: "robot3"
             parameters:

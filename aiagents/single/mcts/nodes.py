@@ -11,6 +11,7 @@ class TreeNode():
     def __init__(self, parent):
         self.numVisits = 0
         self.totalReward = 0
+        self.Mn = 0
         self.numExpands = 0
         self.isFullyExpanded = False
         # parent and children kept private. Nice!
@@ -28,8 +29,15 @@ class TreeNode():
  
     def backpropagate(self, reward):
         # recursion cleaner -- allows to keep parent private -- and not that much slower (10%) but possibility of optimization here
+        oldVisits = self.numVisits
+        oldTotalReward = self.totalReward
+        if oldVisits==0:
+            oldMean=0
+        else:
+            oldMean=oldTotalReward/oldVisits
         self.numVisits += 1
         self.totalReward += reward
+        self.Mn += (reward - oldMean)*(reward - self.totalReward/self.numVisits)
         if self._parent is not None:
             self._parent.backpropagate(reward)
 
@@ -55,13 +63,21 @@ class StateNode(TreeNode):
             if selectedNode.isFullyExpanded:
                 if selectedNode.isTerminal:
                     break
-                selectedNode = selectedNode._UCT(self.parameters['explorationConstant']).sampleChild()
+                actionNode = selectedNode._UCT(self.parameters['explorationConstant'])
+                if(actionNode.isFullyExpanded):
+                    # sparse sampling
+                    selectedNode = actionNode.sampleChild()
+                else:
+                    # calls expand once and then rollout
+                    selectedNode, rolloutReward = actionNode.expand()
+                    reward += rolloutReward
+                    break
             else:
                 # calls expand twice, first for the state node then the action node
                 selectedNode, rolloutReward = selectedNode.expand()
                 reward += rolloutReward
                 break
-
+        
         selectedNode.backpropagate(reward)
 
     def getBestChild(self):
@@ -80,17 +96,24 @@ class StateNode(TreeNode):
         """
         expands the state node by the agent action, automatically expands the child node
         """
-        agentAction = self.treeAgent.step(self.getState(), self.immediateReward, self.isTerminal)
+        agentActionNo = 0
+        N = self.simulator.action_space.get(self.agentId).getSize()
+        while True:
+            #agentActionNo = agentActionNo % N
+            #agentAction = {self.agentId: agentActionNo}
+            #agentActionNo += 1
+            agentAction = self.treeAgent.step(self.getState(), self.immediateReward, self.isTerminal)
 
-        key = str(agentAction)
-        if key not in self._children.keys():
-            self._children[key] = ActionNode(agentAction, self)
-        self._children[key].numExpands += 1
+            key = str(agentAction)
+            if key not in self._children.keys():
+                self._children[key] = ActionNode(agentAction, self)
+                if not self._children[key].isFullyExpanded:
+                    expandedNode = self._children[key].expand()
+                    break
 
-        expandedNode = self._children[key].expand()
-
-        if self.simulator.action_space.getSize() <= len(self._children.values()):
-            self.isFullyExpanded = all([_childActionNode.isFullyExpanded for _childActionNode in self._children.values()])
+        
+        if self.simulator.action_space.get(self.agentId).getSize() <= len(self._children.values()):
+            self.isFullyExpanded = True#all([_childActionNode.isFullyExpanded for _childActionNode in self._children.values()])
 
         return expandedNode
 
@@ -100,8 +123,9 @@ class StateNode(TreeNode):
         """
         bestValue = float("-inf")
         bestNodes = []
+
         for child in self._children.values():
-            childValue = child.totalReward / child.numVisits + explorationValue * math.sqrt(2 * math.log(self.numVisits) / child.numVisits)
+            childValue = child.totalReward / child.numVisits + max(self.parameters["maxSteps"] - self._STATE.step, 1.) * explorationValue * math.sqrt(2 * math.log(self.numVisits) / child.numVisits)
             if childValue > bestValue:
                 bestValue = childValue
                 bestNodes = [child]
@@ -109,7 +133,8 @@ class StateNode(TreeNode):
                 bestNodes.append(child)
 
             if(explorationValue == 0):
-                logging.info("Action: " + str(child.getAction()) + " child value " + str(childValue) + " numVisits " + str(child.numVisits) + " totalReward " + str(child.totalReward))
+                variance = child.Mn / child.numVisits #no Bessel correction to avoid division by 0
+                print("Action: " + str(child.getAction()) + " child value " + str(childValue) + " numVisits " + str(child.numVisits) + " totalReward " + str(child.totalReward) + " variance " + str(variance/child.numVisits)) # variance of a sample mean formula
 
         return random.choice(bestNodes)
 
@@ -153,20 +178,27 @@ class ActionNode(TreeNode):
         expands a node by sampling from the simulator
         """
         # sample an action, step the simulator
+        self.numExpands += 1
         simulator = self.simulator
         simulator.setState(self._parent.getState())
-        actions = {}
+
         if(self.otherAgents):
-            actions = self.otherAgents.step(self._parent.getState(), self._parent.immediateReward, self._parent.isTerminal)
+            otherActions = self.otherAgents.step(self._parent.getState(), self._parent.immediateReward, self._parent.isTerminal)
+            actions=copy.deepcopy(otherActions)
+            otherActionsRep = str(otherActions)
+        else:
+            actions = {}
+            otherActionsRep = ""
+
         actions.update(self.getAction())
         state, reward, done, info = simulator.step(actions)
         
-        key = str(state)
+        key = str(state)+otherActionsRep
         if key not in self._children.keys():
             self._children[key] = StateNode(state, reward, done, self)
         self._children[key].numExpands += 1
 
-        if(self.numExpands >= self.parameters['samplingLimit']):
+        if(self.numVisits >= self.parameters['samplingLimit']):
             self.isFullyExpanded = True
 
         # rollout and backpropagate

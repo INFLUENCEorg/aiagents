@@ -72,20 +72,28 @@ class TabularAgent(AtomicAgent):
         self._subAgent = createAgent(environment, backupClassDictionary)
 
         super().__init__(agentId, environment, parameters)
+
+        self.predicts=0
+        self.noPredicts=0
        
     def step(self, observation: FactoryFloorState, reward=None, done=None):
         state = toTuple(encodeStateAsArray(state=observation))
         try: 
             action = self._model[state]
-            print("PREDICTED ACTION " + str(action) + " STATE " + str(state))
+            self.predicts += 1
         except KeyError:
-            print("NONE")
-            #logging.error("Model predict is None")
+            self.noPredicts += 1
             return self._subAgent.step(observation, reward, done)
         except AttributeError:
             print("ATTR ERROR")
             breakpoint()
         
         return {self._agentId: action}
+
+    def __del__(self):
+        try:
+            print("Ratio of predicts = " + str(self.predicts / (self.predicts+self.noPredicts) ) )
+        except ZeroDivisionError:
+            print("Ratio of predicts = 0")
 
 

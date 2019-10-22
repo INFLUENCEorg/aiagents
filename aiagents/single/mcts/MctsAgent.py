@@ -10,12 +10,14 @@ from aienvs.gym.DecoratedSpace import DecoratedSpace
 import math
 from aiagents.single.AtomicAgent import AtomicAgent
 from aiagents.AgentFactory import createAgent
+from dict_recursive_update import recursive_update
 
 
 class MctsAgent(AtomicAgent):
     DEFAULT_PARAMETERS = {'treeParameters': {
         'explorationConstant': 1 / math.sqrt(2),
-        'samplingLimit': 20}}
+        'samplingLimit': 20,
+        'maxSteps': 0}}
 
     def __init__(self, agentId, environment: Env, parameters: dict): 
         """
@@ -27,7 +29,7 @@ class MctsAgent(AtomicAgent):
         if not ('treeAgent' in parameters and 'rolloutAgent' in parameters):
             raise "parameters does not contain 'treeAgent', 'rolloutAgent':" + str(parameters)
         self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
-        self._parameters.update(parameters)
+        self._parameters = recursive_update(self._parameters, parameters)
         self.agentId = agentId
 
         if 'timeLimit' in self._parameters:
@@ -56,8 +58,9 @@ class MctsAgent(AtomicAgent):
        
     def step(self, observation, reward, done):
         if done:
+            breakpoint()
             # whatever action is ok
-            return self._treeAgent.step(observation, reward, done)
+            #return self._treeAgent.step(observation, reward, done)
 
         root = RootNode(state=observation, reward=0., done=done, simulator=self._simulator,
                 agentId=self.agentId, parameters=self._parameters['treeParameters'],
@@ -70,7 +73,7 @@ class MctsAgent(AtomicAgent):
         else:
             for i in range(self._parameters['iterationLimit']):
                 root.executeRound()
-
+        
         action = root.getBestChild().getAction()
         logging.info("Action " + str(action))
 
