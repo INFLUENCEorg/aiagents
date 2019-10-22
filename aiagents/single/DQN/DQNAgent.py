@@ -71,3 +71,18 @@ class DQNAgent(AtomicAgent):
         self.step_count += 1
 
         return {self._agentId: action}
+
+    def getQ(self, state, action):
+        # assume a batch setting in which the first dimension of `state` is a batch dimension
+        # with that being said, the shape of `state` is [batch_dim, heigh, width, num_frames]
+        # the resulting q_values should have shape [batch_dim, num_actions]
+        q_values = self.deep_q_function.get_q_values(state)[action] # not sure, haven't tested
+        return q_values
+
+    def getV(self, state):
+        # assume the training is done and we have optimal Q values
+        # then an optimal policy is a greedy policy based on the optimal Q values
+        # therefore, the V value of a state is the max Q value
+        q_values = self.deep_q_function.get_q_values(state)
+        v_values = np.max(q_values, axis=-1)
+        return v_values
