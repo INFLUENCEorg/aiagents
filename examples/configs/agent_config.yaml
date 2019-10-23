@@ -3,10 +3,11 @@ aliases:
   - &MctsAgent aiagents.single.mcts.MctsAgent.MctsAgent
   - &RandomAgent aiagents.single.RandomAgent.RandomAgent
   - &FactoryFloorAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+  - &FactoryFloorIterativeGreedy aiagents.multi.FactoryFloorIterativeGreedy.FactoryFloorIterativeGreedy
 
 config:
   - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
-  #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+    #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
     #- &RobotAgent aiagents.single.RandomAgent.RandomAgent
   - &iterationLimit 500
   - &explorationConstant 1
@@ -27,11 +28,11 @@ parameters:
                 id: "robot1"
                 parameters: {}
               rolloutAgent:
-                class: *RandomAgent
+                class: *FactoryFloorAgent
                 id: "robot1"
                 parameters: {}
               otherAgents:
-                    class: *BasicComplexAgent
+                    class: *FactoryFloorIterativeGreedy
                     parameters: {}
                     subAgentList:
                       - class: *FactoryFloorAgent
@@ -54,11 +55,11 @@ parameters:
                 id: "robot2"
                 parameters: {}
               rolloutAgent:
-                class: *RandomAgent
+                class: *FactoryFloorAgent
                 id: "robot2"
                 parameters: {}
               otherAgents:
-                  class: *BasicComplexAgent
+                  class: *FactoryFloorIterativeGreedy
                   parameters: {}
                   subAgentList:
                       - class: *FactoryFloorAgent
@@ -81,11 +82,11 @@ parameters:
                 id: "robot3"
                 parameters: {}
               rolloutAgent:
-                class: *RandomAgent
+                class: *FactoryFloorAgent
                 id: "robot3"
                 parameters: {}
               otherAgents:
-                  class: *BasicComplexAgent
+                  class: *FactoryFloorIterativeGreedy
                   parameters: {}
                   subAgentList:
                       - class: *FactoryFloorAgent

@@ -31,7 +31,6 @@ class MctsAgent(AtomicAgent):
             raise "parameters does not contain 'treeAgent', 'rolloutAgent':" + str(parameters)
         self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
         self._parameters = recursive_update(self._parameters, parameters)
-        self.agentId = agentId
 
         if 'timeLimit' in self._parameters:
             if 'iterationLimit' in self._parameters:

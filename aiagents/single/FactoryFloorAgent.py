@@ -9,6 +9,36 @@ from gym import spaces
 import math
 import operator
 
+def getPath(source, destination, pathDict):
+    return pathDict[str(source)][str(destination)]
+
+def getDistance(path):
+    return len(path)-1
+
+def setTargetPosition(positionEvaluationDictionary, socialOrder):
+    # sort the positions
+    sortedEvaluation = sorted(positionEvaluationDictionary.items(), 
+            key=operator.itemgetter(1), reverse=True)
+    return sortedEvaluation[socialOrder][0]
+
+def evaluateAllPositions(state, robotpos, pathDict):
+    positionEvaluation = {}
+    for task in state.tasks:
+        taskpos = str(task.getPosition())
+        try:
+            currentEvaluation = positionEvaluation[taskpos]
+        except KeyError:
+            currentEvaluation = 0
+
+        path = getPath(robotpos, taskpos, pathDict)
+        distance=getDistance(path)
+        if(distance==0):
+            positionEvaluation.update({taskpos: math.inf})
+        else:
+            newEvaluation = currentEvaluation + 1./getDistance(path)
+            positionEvaluation.update({taskpos: newEvaluation})
+
+    return positionEvaluation
 
 class FactoryFloorAgent(AtomicAgent):
     """
@@ -23,7 +53,7 @@ class FactoryFloorAgent(AtomicAgent):
         # inverting the key action pairs for meaningful navigation
         self._ACTIONS = dict(zip(environment.ACTIONS.values(), environment.ACTIONS.keys()))
         self._graph = FactoryGraph(environment.getMap())
-        self._pathDict = dict(networkx.all_pairs_dijkstra_path(self._graph))
+        self.pathDict = dict(networkx.all_pairs_dijkstra_path(self._graph))
         self._mapping = { "[0 -1]":self._ACTIONS.get("UP"),
                          '[ 0 -1]':self._ACTIONS.get("UP"),
                          "[0 1]":self._ACTIONS.get("DOWN"),
@@ -44,57 +74,26 @@ class FactoryFloorAgent(AtomicAgent):
         robotpos = self._getCurrentPosition(state)
         socialOrder = self._computeSocialOrder(state, robotpos)
 
-        positionEvaluation = self._evaluateAllPositions(state, robotpos)
+        positionEvaluation = evaluateAllPositions(state, robotpos, self.pathDict)
         # more robots than tasks our robot stays put
         if( len(positionEvaluation) <= socialOrder ):
             return {self._agentId: self._ACTIONS.get("ACT")}
 
-        positionToReach = self._setTargetPosition(positionEvaluation, socialOrder)
-        path = self._getPath(robotpos, positionToReach)
-        action = self._getAction(path)
+        positionToReach = setTargetPosition(positionEvaluation, socialOrder)
+        path = getPath(robotpos, positionToReach, self.pathDict)
+        action = self.getAction(path)
 
         logging.debug(action)
         return action
 
-    def _getPath(self, source, destination):
-        return self._pathDict[str(source)][str(destination)]
-
-    def _getAction(self, path):
-        if self._getDistance(path) == 0:
+    def getAction(self, path):
+        if getDistance(path) == 0:
             action = {self._agentId: self._ACTIONS.get("ACT")}
         else:
             delta = self._toarray(path[1]) - self._toarray(path[0])
             action = {self._agentId:self._mapping.get(str(delta))}
 
         return action
-
-    def _getDistance(self, path):
-        return len(path)-1
-
-    def _setTargetPosition(self, positionEvaluationDictionary, socialOrder):
-        # sort the positions
-        sortedEvaluation = sorted(positionEvaluationDictionary.items(), 
-                key=operator.itemgetter(1), reverse=True)
-        return sortedEvaluation[socialOrder][0]
-
-    def _evaluateAllPositions(self, state, robotpos):
-        positionEvaluation = {}
-        for task in state.tasks:
-            taskpos = str(task.getPosition())
-            try:
-                currentEvaluation = positionEvaluation[taskpos]
-            except KeyError:
-                currentEvaluation = 0
-
-            path = self._getPath(robotpos, taskpos)
-            distance=self._getDistance(path)
-            if(distance==0):
-                positionEvaluation.update({taskpos: math.inf})
-            else:
-                newEvaluation = currentEvaluation + 1./self._getDistance(path)
-                positionEvaluation.update({taskpos: newEvaluation})
-
-        return positionEvaluation
 
     def _getCurrentPosition(self, state):
         return state.robots.get(self._agentId).getPosition()
