@@ -11,6 +11,7 @@ import math
 from aiagents.single.AtomicAgent import AtomicAgent
 from aiagents.AgentFactory import createAgent
 from dict_recursive_update import recursive_update
+from aienvs.FactoryFloor.DiyFactoryFloorAdapter import DiyFactoryFloorAdapter
 
 
 class MctsAgent(AtomicAgent):
@@ -45,8 +46,13 @@ class MctsAgent(AtomicAgent):
             if self._parameters['iterationLimit'] < 1:
                 raise ValueError("Iteration limit must be greater than one")
             self._limitType = 'iterations'
-
+        
         self._simulator = ModifiedGymEnv(copy.deepcopy(environment), DecoratedSpace.create(copy.deepcopy(environment.action_space)))
+
+        # diyBonus logic: to refactor -- include in a simulator factory / only for FactoryFloor env
+        diyBonus =  self._parameters.get("diyBonus")
+        if diyBonus is not None:
+            self._simulator = DiyFactoryFloorAdapter(self._simulator, diyBonus, self.agentId)
 
         self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
         self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
@@ -58,9 +64,8 @@ class MctsAgent(AtomicAgent):
        
     def step(self, observation, reward, done):
         if done:
+            # in current "Episode" implementation should never reach here
             breakpoint()
-            # whatever action is ok
-            #return self._treeAgent.step(observation, reward, done)
 
         root = RootNode(state=observation, reward=0., done=done, simulator=self._simulator,
                 agentId=self.agentId, parameters=self._parameters['treeParameters'],

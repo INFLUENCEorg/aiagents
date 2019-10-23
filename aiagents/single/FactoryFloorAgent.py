@@ -97,16 +97,12 @@ class FactoryFloorAgent(AtomicAgent):
         return positionEvaluation
 
     def _getCurrentPosition(self, state):
-        for robot in state.robots:
-            if robot.getId() == self._agentId:
-                robotpos = robot.getPosition()
-                break
-        return robotpos
+        return state.robots.get(self._agentId).getPosition()
 
     def _computeSocialOrder(self, state, robotpos):
         # social law based on agent ids lexicographic order
         socialOrder=0
-        for robot in state.robots:
+        for robot in state.robots.values():
             if (robot.getPosition()==robotpos).all() and (robot.getId() < self._agentId):
                 socialOrder += 1
         
