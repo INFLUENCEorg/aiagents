@@ -59,7 +59,6 @@ class TabularAgent(AtomicAgent):
                 try:
                     self._model = yaml.load(stream)
                 except yaml.YAMLError as exc:
-                    breakpoint()
                     logging.error(exc)
         except FileNotFoundError:
             print("No agent files available yet")
@@ -85,8 +84,7 @@ class TabularAgent(AtomicAgent):
             self.noPredicts += 1
             return self._subAgent.step(observation, reward, done)
         except AttributeError:
-            print("ATTR ERROR")
-            breakpoint()
+            raise Exception("Attribute error in trained agent")
         
         return {self._agentId: action}
 

@@ -6,14 +6,14 @@ aliases:
   - &FactoryFloorIterativeGreedy aiagents.multi.FactoryFloorIterativeGreedy.FactoryFloorIterativeGreedy
 
 config:
-  - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
-    #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+  #- &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
+  - &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
     #- &RobotAgent aiagents.single.RandomAgent.RandomAgent
   - &iterationLimit 500
   - &explorationConstant 1
   - &samplingLimit 30
   - &maxSteps 10
-  - &diyBonus 0.7
+  - &diyBonus 0.0
 
 # do not edit here
 parameters:

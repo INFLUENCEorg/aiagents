@@ -64,7 +64,7 @@ class MctsAgent(AtomicAgent):
     def step(self, observation, reward, done):
         if done:
             # in current "Episode" implementation should never reach here
-            breakpoint()
+            raise Exception("Should never reach here")
 
         root = RootNode(state=observation, reward=0., done=done, simulator=self._simulator,
                 agentId=self.agentId, parameters=self._parameters['treeParameters'],
