@@ -5,19 +5,19 @@ parameters:
     name: 'Two_Grid_Test'
     algorithm: DQN
     port: 8000
-    gui: true
+    gui: false
     env_type: 'SUMO'
 
     max_steps: 2.0e+6
     max_episode_steps: 5.0e+3
-    frame_height: 1500
-    frame_width: 1000
-    num_frames: 10
+    frame_height: 1000
+    frame_width: 1500
+    num_frames: 2 # 10
     skip_frames: 1
     gamma: 0.99
     learning_rate: 2.5e-4
     batch_size: 32
-    memory_size: 30000
+    memory_size: 100 # 30000
     train_frequency: 1
     save_frequency: 5.0e+4
     summary_frequency: 1.0e+4
