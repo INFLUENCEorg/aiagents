@@ -10,12 +10,15 @@ from aienvs.gym.DecoratedSpace import DecoratedSpace
 import math
 from aiagents.single.AtomicAgent import AtomicAgent
 from aiagents.AgentFactory import createAgent
+from dict_recursive_update import recursive_update
+from aienvs.FactoryFloor.DiyFactoryFloorAdapter import DiyFactoryFloorAdapter
 
 
 class MctsAgent(AtomicAgent):
     DEFAULT_PARAMETERS = {'treeParameters': {
         'explorationConstant': 1 / math.sqrt(2),
-        'samplingLimit': 20}}
+        'samplingLimit': 20,
+        'maxSteps': 0}}
 
     def __init__(self, agentId, environment: Env, parameters: dict): 
         """
@@ -27,8 +30,7 @@ class MctsAgent(AtomicAgent):
         if not ('treeAgent' in parameters and 'rolloutAgent' in parameters):
             raise "parameters does not contain 'treeAgent', 'rolloutAgent':" + str(parameters)
         self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
-        self._parameters.update(parameters)
-        self.agentId = agentId
+        self._parameters = recursive_update(self._parameters, parameters)
 
         if 'timeLimit' in self._parameters:
             if 'iterationLimit' in self._parameters:
@@ -43,8 +45,13 @@ class MctsAgent(AtomicAgent):
             if self._parameters['iterationLimit'] < 1:
                 raise ValueError("Iteration limit must be greater than one")
             self._limitType = 'iterations'
-
+        
         self._simulator = ModifiedGymEnv(copy.deepcopy(environment), DecoratedSpace.create(copy.deepcopy(environment.action_space)))
+
+        # diyBonus logic: to refactor -- include in a simulator factory / only for FactoryFloor env
+        diyBonus =  self._parameters.get("diyBonus")
+        if diyBonus is not None:
+            self._simulator = DiyFactoryFloorAdapter(self._simulator, diyBonus, self.agentId)
 
         self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
         self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
@@ -56,8 +63,8 @@ class MctsAgent(AtomicAgent):
        
     def step(self, observation, reward, done):
         if done:
-            # whatever action is ok
-            return self._treeAgent.step(observation, reward, done)
+            # in current "Episode" implementation should never reach here
+            raise Exception("Should never reach here")
 
         root = RootNode(state=observation, reward=0., done=done, simulator=self._simulator,
                 agentId=self.agentId, parameters=self._parameters['treeParameters'],
@@ -70,7 +77,7 @@ class MctsAgent(AtomicAgent):
         else:
             for i in range(self._parameters['iterationLimit']):
                 root.executeRound()
-
+        
         action = root.getBestChild().getAction()
         logging.info("Action " + str(action))
 

@@ -3,14 +3,17 @@ aliases:
   - &MctsAgent aiagents.single.mcts.MctsAgent.MctsAgent
   - &RandomAgent aiagents.single.RandomAgent.RandomAgent
   - &FactoryFloorAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+  - &FactoryFloorIterativeGreedy aiagents.multi.FactoryFloorIterativeGreedy.FactoryFloorIterativeGreedy
 
 config:
-  - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
-  #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+  #- &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
+  - &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
     #- &RobotAgent aiagents.single.RandomAgent.RandomAgent
   - &iterationLimit 500
-  - &explorationConstant 10
-  - &samplingLimit 20
+  - &explorationConstant 1
+  - &samplingLimit 30
+  - &maxSteps 10
+  - &diyBonus 0.0
 
 # do not edit here
 parameters:
@@ -25,11 +28,11 @@ parameters:
                 id: "robot1"
                 parameters: {}
               rolloutAgent:
-                class: *RandomAgent
+                class: *FactoryFloorAgent
                 id: "robot1"
                 parameters: {}
               otherAgents:
-                    class: *BasicComplexAgent
+                    class: *FactoryFloorIterativeGreedy
                     parameters: {}
                     subAgentList:
                       - class: *FactoryFloorAgent
@@ -39,9 +42,11 @@ parameters:
                         id: "robot3"
                         parameters: {}
               iterationLimit: *iterationLimit
+              diyBonus: *diyBonus
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
+                  maxSteps: *maxSteps
           - class: *RobotAgent
             id: "robot2"
             parameters:
@@ -50,11 +55,11 @@ parameters:
                 id: "robot2"
                 parameters: {}
               rolloutAgent:
-                class: *RandomAgent
+                class: *FactoryFloorAgent
                 id: "robot2"
                 parameters: {}
               otherAgents:
-                  class: *BasicComplexAgent
+                  class: *FactoryFloorIterativeGreedy
                   parameters: {}
                   subAgentList:
                       - class: *FactoryFloorAgent
@@ -64,9 +69,11 @@ parameters:
                         id: "robot3"
                         parameters: {}
               iterationLimit: *iterationLimit
+              diyBonus: *diyBonus
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
+                  maxSteps: *maxSteps
           - class: *RobotAgent
             id: "robot3"
             parameters:
@@ -75,11 +82,11 @@ parameters:
                 id: "robot3"
                 parameters: {}
               rolloutAgent:
-                class: *RandomAgent
+                class: *FactoryFloorAgent
                 id: "robot3"
                 parameters: {}
               otherAgents:
-                  class: *BasicComplexAgent
+                  class: *FactoryFloorIterativeGreedy
                   parameters: {}
                   subAgentList:
                       - class: *FactoryFloorAgent
@@ -89,6 +96,7 @@ parameters:
                         id: "robot2"
                         parameters: {}
               iterationLimit: *iterationLimit
+              diyBonus: *diyBonus
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
