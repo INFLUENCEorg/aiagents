@@ -93,7 +93,7 @@ class DeepQNetwork(Q_function):
         #     summary, _ = self.sess.run([self.summaries, self.opt_operation], feed_dict=var_dict)
         #     self.train_writer.add_summary(summary, self.update_counter)
         # else:
-        
+
         # no summary at the moment
         self.sess.run(self.opt_operation, feed_dict=var_dict)
         self.update_counter += 1
@@ -145,22 +145,22 @@ class DeepQNetwork(Q_function):
                     h = tf.nn.conv2d(x, var['conv1_w'], strides=[1, 4, 4, 1], padding='VALID')
                     h = tf.nn.bias_add(h, var['conv1_b'])
                     h = tf.nn.relu(h, name='activation')
-                # with tf.variable_scope('conv2'):
-                #     var['conv2_w'] = tf.get_variable('filter', (4, 4, 32, 64), initializer=self.init_func,
-                #                                      regularizer=reg)
-                #     var['conv2_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
-                #     # Do the calculations of this layer
-                #     h = tf.nn.conv2d(h, var['conv2_w'], strides=[1, 2, 2, 1], padding='VALID')
-                #     h = tf.nn.bias_add(h, var['conv2_b'])
-                #     h = tf.nn.relu(h, name='activation')
-                # with tf.variable_scope('conv3'):
-                #     var['conv3_w'] = tf.get_variable('filter', (3, 3, 64, 64), initializer=self.init_func,
-                #                                      regularizer=reg)
-                #     var['conv3_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
-                #     # Do the calculations of this layer
-                #     h = tf.nn.conv2d(h, var['conv3_w'], strides=[1, 1, 1, 1], padding='VALID')
-                #     h = tf.nn.bias_add(h, var['conv3_b'])
-                #     h = tf.nn.relu(h, name='activation')
+                with tf.variable_scope('conv2'):
+                    var['conv2_w'] = tf.get_variable('filter', (4, 4, 32, 64), initializer=self.init_func,
+                                                     regularizer=reg)
+                    var['conv2_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
+                    # Do the calculations of this layer
+                    h = tf.nn.conv2d(h, var['conv2_w'], strides=[1, 2, 2, 1], padding='VALID')
+                    h = tf.nn.bias_add(h, var['conv2_b'])
+                    h = tf.nn.relu(h, name='activation')
+                with tf.variable_scope('conv3'):
+                    var['conv3_w'] = tf.get_variable('filter', (3, 3, 64, 64), initializer=self.init_func,
+                                                     regularizer=reg)
+                    var['conv3_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
+                    # Do the calculations of this layer
+                    h = tf.nn.conv2d(h, var['conv3_w'], strides=[1, 1, 1, 1], padding='VALID')
+                    h = tf.nn.bias_add(h, var['conv3_b'])
+                    h = tf.nn.relu(h, name='activation')
                 with tf.variable_scope('flatten'):
                     # Reshape the output of the conv layers to be flat
                     n_input = h.get_shape().as_list()[1] * h.get_shape().as_list()[2] * h.get_shape().as_list()[3]
