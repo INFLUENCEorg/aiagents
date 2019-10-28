@@ -1,5 +1,6 @@
 from aiagents.AgentComponent import AgentComponent
 
+
 class ComplexAgent(AgentComponent):
     """
     A class to inherit from, a complex agent component characterizes
@@ -7,4 +8,7 @@ class ComplexAgent(AgentComponent):
     """
 
     def __init__(self, agentComponentList, parameters=None):
-        self._agentSubcomponents=agentComponentList
+        self._agentSubcomponents = agentComponentList
+
+    def getSubAgents(self) -> list:  # <AgentComponent>
+        return self._agentSubcomponents

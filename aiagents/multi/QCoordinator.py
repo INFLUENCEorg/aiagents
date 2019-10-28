@@ -1,6 +1,6 @@
 from aiagents.multi.ComplexAgent import ComplexAgent
 from .BasicComplexAgent import BasicComplexAgent
-from ..QAgentComponent import QAgentComponent
+from aiagents.QAgentComponent import QAgentComponent
 from gym import spaces
 from aienvs.gym.DecoratedSpace import DecoratedSpace
 from aienvs.Environment import Env
@@ -22,12 +22,15 @@ class QCoordinator(BasicComplexAgent):
 
     def __init__(self, agentComponentList:list, environment:Env, parameters:dict=None):
         """
-        @param AgentComponentList: a list of QAgentComponent.
-        @param environment the openAI Gym Env
+        @param AgentComponentList: a list of QAgentComponent. Size must be >=1
+        @param environment the openAI Gym Env. Must have actionspace of type Dict
         @param parameters the optional init dictionary with parameters  
         """
         if not isinstance(environment.action_space, spaces.Dict):
             raise ValueError("Environment must have a Dict actionspace but found " + environment.action_space)
+        if size(agentComponentList) == 0:
+            raise ValueError("There must be at least 1 agent in the list")
+        
         for component in agentComponentList:
             if not isinstance(component, QAgentComponent):
                 raise ValueError("All agent components for QCoordinator must be QAgentComponent but found " + component)
