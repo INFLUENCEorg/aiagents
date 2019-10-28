@@ -13,11 +13,14 @@ class QAgentComponent(AgentComponent):
     """
 
     @abstractmethod
-    def getQ(self, state, action):
+    def getQ(self, state, action) -> float:
         """
         @param state the current state / observation of the environment 
         @param action a dict describing an action, eg {"entityId2": a2, "entityId3": a3 }
-        @return Q value of a state action pair
+        This dict may also contain actions for entities that are irrelevant
+        for this component and have to be ignored then by the component. 
+        @return Q value float of a <state,action> pair. This must not return
+        +-inf.
         """
         pass
 
