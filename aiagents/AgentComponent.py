@@ -14,7 +14,11 @@ class AgentComponent(ABC):
     @abstractmethod
     def step(self, observation=None, reward:float=None, done:bool=None) -> spaces.Dict:
         """
-        should return a dictionary of controller ids and respective actions
+        @param observation FIXME the current observation. What is the format?
+        @param reward FIXME not clear what this is, maybe reward received from last action?
+        @param done FIXME not clear what this is. What is done and why should the step method care?
+
+        @return a dictionary of controller ids and respective actions
         """
         pass
 
