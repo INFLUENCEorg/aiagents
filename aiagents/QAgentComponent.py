@@ -2,6 +2,7 @@ from aiagents.AgentComponent import AgentComponent
 from abc import abstractmethod
 from math import inf
 
+
 class QAgentComponent(AgentComponent):
     """
     Represents a Q-agent component
@@ -13,7 +14,11 @@ class QAgentComponent(AgentComponent):
 
     @abstractmethod
     def getQ(self, state, action):
-        "Q value of a state action pair"
+        """
+        @param state the current state / observation of the environment 
+        @param action a dict describing an action, eg {"entityId2": a2, "entityId3": a3 }
+        @return Q value of a state action pair
+        """
         pass
 
     @abstractmethod
