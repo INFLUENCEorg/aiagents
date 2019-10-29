@@ -27,6 +27,7 @@ class QCoordinator(BasicComplexAgent):
         """
         if not isinstance(environment.action_space, spaces.Dict):
             raise ValueError("Environment must have a Dict actionspace but found " + str(environment.action_space))
+
         if len(agentComponentList) == 0:
             raise ValueError("There must be at least 1 agent in the list")
         
