@@ -68,6 +68,6 @@ class testComplexAgentComponent(LoggedTestCase):
     def test_check_subparty(self): 
         params = {'class':compoundclass, 'parameters':{}, 'subAgentList':[{'class':randomclass, 'id':'robot1', 'parameters':{}}]}
         agt = createAgent(env, params)
-        subs = agt.getSubAgents()
+        subs = agt._agentSubcomponents
         self.assertEquals(1, len(subs))
         self.assertEquals('RandomAgent', type(subs[0]).__name__)

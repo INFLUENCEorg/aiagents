@@ -10,5 +10,3 @@ class ComplexAgent(AgentComponent):
     def __init__(self, agentComponentList, parameters=None):
         self._agentSubcomponents = agentComponentList
 
-    def getSubAgents(self) -> list:  # <AgentComponent>
-        return self._agentSubcomponents
