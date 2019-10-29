@@ -10,8 +10,7 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     Create an agent from a given full path name
     @param environment see AgentComponent __init__
     @param parameters this parameter is a dictionary. It must contain these keys
-    * 'class': the class name (str) of the agent to be loaded.
-      The class will be resolved by resolve from the aiagents directory.
+    * 'class': the class name (str) of the agent to be loaded.The class will be resolved by resolve from the aiagents directory.
     * 'parameters': the subparameters (dict) to be passed into the agent.
     * 'either 'id' or 'subAgentList' which fulfills two purposes:
      1. It is used to guess the type of full.class.name that will be created,
@@ -27,18 +26,34 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     @return an initialized AgentComponent
     '''
     logging.debug(parameters)
+    if not 'class' in parameters:
+        raise ValueError("Parameters must have key 'class' but got " + str(parameters))
+    if (not 'parameters' in parameters) or not isinstance(parameters['parameters'], dict) :
+        raise ValueError("Parameters must have key 'parameters' containing a dict but got " + str(parameters))
+    if not ('id' in parameters or 'subAgentList' in parameters):
+        raise ValueError("Parameters must contain either key 'id' or key 'subAgentList but got " + str(parameters))
+    if ('subAgentList' in parameters and not isinstance(parameters['subAgentList'], list)):
+        raise ValueError("the subAgentList parameter must contain a list, but got " + str(parameters))
     classname = parameters['class']
     # classname = resolve(parameters['class'], 'aiagents')
     class_parameters = parameters['parameters']
-    klass = classForNameTyped(classname, AgentComponent)
-
+    try:
+        klass = classForNameTyped(classname, AgentComponent)
+    except Exception as error:
+        raise ValueError("Can't load " + str(classname) + " from " + str(parameters)) from error
     if 'id' in parameters:
-        obj = klass(parameters['id'], environment, class_parameters)
+        try:
+            obj = klass(parameters['id'], environment, class_parameters)
+        except Exception as error:
+            raise ValueError(classname + " failed on __init__:") from error
     elif 'subAgentList' in parameters:
         subAgentList = []
         for subAgentParameters in parameters['subAgentList']:
             subAgentList.append(createAgent(environment, subAgentParameters))
-        obj = klass(subAgentList, class_parameters)
+            try:
+                obj = klass(subAgentList, environment, class_parameters)
+            except Exception as error:
+                raise ValueError(classname + " failed on __init__:") from error
     else:
         raise Exception("parameters " + str(parameters) + " does not contain key 'id' or 'subAgentList'")
 
