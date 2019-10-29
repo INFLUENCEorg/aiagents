@@ -4,7 +4,6 @@ from aiagents.QAgentComponent import QAgentComponent
 from gym import spaces
 from aienvs.gym.DecoratedSpace import DecoratedSpace
 from aienvs.Environment import Env
-from route.routecompare import INFINITY
 
 
 class QCoordinator(BasicComplexAgent):
