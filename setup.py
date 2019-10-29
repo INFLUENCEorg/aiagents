@@ -15,5 +15,5 @@ setup(name='aiagents',
         "Operating System :: OS Independent",
     ],
     # install_requires=['absl-py', 'astor', 'atari-py', 'certifi', 'chardet', 'cycler', 'future', 'gast', 'grpcio', 'gym', 'h5py', 'idna', 'Keras-Applications', 'Keras-Preprocessing', 'kiwisolver', 'Markdown', 'matplotlib', 'mock', 'numpy', 'protobuf', 'pyglet', 'pyparsing', 'python-dateutil', 'PyYAML', 'requests', 'scipy', 'six', 'tensorboard', 'tensorflow', 'tensorflow-estimator', 'termcolor', 'urllib3', 'Werkzeug'
-    install_requires=['aienvs', 'tensorflow' ]
+    install_requires=['aienvs', 'tensorflow', 'dict_recursive_update' ]
 )

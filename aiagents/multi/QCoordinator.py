@@ -34,7 +34,8 @@ class QCoordinator(BasicComplexAgent):
         for component in agentComponentList:
             if not isinstance(component, QAgentComponent):
                 raise ValueError("All agent components for QCoordinator must be QAgentComponent but found " + component)
-        super(QCoordinator, self).__init__(agentComponentList, parameters)
+
+        super(QCoordinator, self).__init__(agentComponentList, environment, parameters)
         self.actionspace = DecoratedSpace.create(environment.action_space)
         if self.actionspace.getSize() == 0:
             # error because we then can't find the best action

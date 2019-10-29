@@ -42,13 +42,16 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
     except Exception as error:
         raise ValueError("Can't load " + str(classname) + " from " + str(parameters)) from error
     if 'id' in parameters:
-        obj = klass(parameters['id'], environment, class_parameters)
+        try:
+            obj = klass(parameters['id'], environment, class_parameters)
+        except Exception as error:
+            raise ValueError(classname + " failed on __init__:") from error
     elif 'subAgentList' in parameters:
         subAgentList = []
         for subAgentParameters in parameters['subAgentList']:
             subAgentList.append(createAgent(environment, subAgentParameters))
             try:
-                obj = klass(subAgentList, class_parameters)
+                obj = klass(subAgentList, environment, class_parameters)
             except Exception as error:
                 raise ValueError(classname + " failed on __init__:") from error
     else:
