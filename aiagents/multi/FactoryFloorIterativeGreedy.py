@@ -8,7 +8,7 @@ class FactoryFloorIterativeGreedy(ComplexAgent):
     """
     Iterative Greedy as in Claes'17 paper
     """
-    def __init__(self, ffAgentList, parameters=None):
+    def __init__(self, ffAgentList, environment, parameters=None):
         self.pathDict=ffAgentList[0].pathDict
         self._ffAgentDict = {}
         for ffAgent in ffAgentList:

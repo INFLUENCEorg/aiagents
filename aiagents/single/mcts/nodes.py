@@ -205,17 +205,12 @@ class ActionNode(TreeNode):
         if done:
             rolloutReward = 0
         else:
-            rolloutReward = self._rollout(simulator, state, reward, done, self.otherAgents)
+            rolloutReward = self._rollout(simulator, state, reward, done)
         
         return self._children[key], rolloutReward + reward
 
-    def _rollout(self, simulator, state, reward, done, otherAgents):
-        if self.otherAgents:
-            jointAgent = BasicComplexAgent([self.rolloutAgent, self.otherAgents]) 
-        else:
-            jointAgent = self.rolloutAgent
-
-        rolloutEpisode = Episode(jointAgent, simulator, state)
+    def _rollout(self, simulator, state, reward, done):
+        rolloutEpisode = Episode(self.rolloutAgent, simulator, state)
         steps, rolloutReward = rolloutEpisode.run()
         return rolloutReward
 
