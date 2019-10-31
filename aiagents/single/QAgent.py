@@ -92,7 +92,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         @param reward the reward associated with going from the old to the 
         new state with action.
         """
-        Qsa = self.getQ(oldstate, action)
+        Qsa = self._getQ(oldstate, action)
         Qs1a = self._getMaxQ(newstate)
         Qnew = (1 - self._alpha) * Qsa + self._alpha * (reward + self._gamma * Qs1a)
         if not oldstate in self._Q.keys():
