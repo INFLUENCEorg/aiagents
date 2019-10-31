@@ -15,7 +15,8 @@ class QAgentComponent(AgentComponent):
     @abstractmethod
     def getQ(self, state, action) -> float:
         """
-        @param state the current state / observation of the environment 
+        @param state the current state / observation of the environment.
+        Should be hashable. We may offer fallback using str(obj) if not hashable.
         @param action a dict describing an action, eg {"entityId2": a2, "entityId3": a3 }
         This dict may also contain actions for entities that are irrelevant
         for this component and have to be ignored then by the component. 
