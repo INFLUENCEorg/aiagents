@@ -25,8 +25,13 @@ class testQAgent(LoggedTestCase):
         agent = QAgent("agent1", Mock())
         self.assertEqual(0, agent._getQ(STATE1, ACT1))
 
-    def test_updateQ(self):
+    def test_updateQ_step1(self):
         agent = QAgent("agent1", Mock(), {'alpha':0.1, 'gamma':1, 'm':500, 's':0.01})
-        agent._updateQ(STATE1, ACT1, STATE2, 2)
-        self.assertEqual(0.2, agent._getQ(STATE1, ACT1))
-
+        agent._updateQ(STATE2, ACT2, STATE3, 2)
+        self.assertEqual(0.2, agent._getQ(STATE2, ACT2))
+    
+    def test_updateQ_step2(self):
+        agent = QAgent("agent1", Mock(), {'alpha':0.1, 'gamma':.9, 'm':500, 's':0.01})
+        agent._updateQ(STATE2, ACT2, STATE3, 2)
+        agent._updateQ(STATE1, ACT1, STATE2, 3)
+        self.assertEqual(0.1 * (3 + .9 * 0.2), agent._getQ(STATE1, ACT1))

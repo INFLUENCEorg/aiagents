@@ -107,7 +107,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         """
         if not state in self._Q.keys():
             return INITIAL_Q
-        return max(self.Q[state].values())
+        return max(self._Q[state].values())
     
     def _getMaxAction(self, state:Hashed) -> Hashed:
         """
