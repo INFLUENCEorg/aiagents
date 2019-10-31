@@ -29,9 +29,6 @@ def main():
     """
     Run the GroupingRobots environment with BasicComplexAgent and QCoordinator.
     """
-    configName = "./configs/new_traffic_loop_ppo.yaml"
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname, configName)
     params = {'steps':1000,
                 'robots':[ {'id': ENTITY1, 'pos':'random'},
                           {'id': ENTITY2, 'pos': 'random'},
@@ -43,7 +40,7 @@ def main():
                        '....']
                 }
     
-    basicEnv = GroupingRobots()
+    basicEnv = GroupingRobots(params)
     logoutput = io.StringIO("episode output log")
     packedActionSpace = PackedSpace(basicEnv.action_space, {"e1":[ENTITY1], "e23": [ENTITY2, ENTITY3]})
     env = ModifiedGymEnv(basicEnv, packedActionSpace)
