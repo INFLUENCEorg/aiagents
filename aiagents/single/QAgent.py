@@ -4,7 +4,7 @@ from aienvs.Environment import Env
 from gym import spaces
 from math import exp
 import random
-from builtins import None
+from aiagents.utils.Hashed import Hashed
 
 INITIAL_Q = 0
 
@@ -35,7 +35,7 @@ class QAgent(AtomicAgent, QAgentComponent):
 
     def __init__(self, switchId:str, environment:Env,
                  parameters:dict={'alpha':0.1, 'gamma':1, 'm':500, 's':0.01}):
-        super(AtomicAgent, self).__init__(switchId, environment, parameters)
+        super().__init__(switchId, environment, parameters)
         self._lastAction = None
         self._lastState = None
         self._alpha = parameters['alpha']
@@ -45,7 +45,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         self._Q = {}  # Q[state][action]=Q value after _lastAction
         self._steps = 0
 
-    #Override
+    # Override
     def step(self, observation=None, reward:float=None, done:bool=None) -> spaces.Dict:
         # observation is the current state
         newstate = Hashed(observation)
@@ -58,11 +58,16 @@ class QAgent(AtomicAgent, QAgentComponent):
         self._steps = self._steps + 1
         return spaces.Dict({self.agentId(), action})
 
-    #Override
+    # Override
     def getQ(self, state, action) -> float:
-        return self._getQ(Hashed(state),Hashed(action))
+        return self._getQ(Hashed(state), Hashed(action))
     
-    def _getQ(self,state:Hashed, action:Hashed):
+    # Override
+    def getV(self, state):
+        return None  # what should this do anyway?
+    
+    ################### PRIVATE ##############
+    def _getQ(self, state:Hashed, action:Hashed):
         """
         @param state the state, not Hashed
         @param action the action, not Hashed
@@ -73,7 +78,6 @@ class QAgent(AtomicAgent, QAgentComponent):
             if action in self._Q[state].keys():
                 return self._Q[state][action]
         return INITIAL_Q
-
     
     def _updateQ(self, oldstate:Hashed, action:Hashed, newstate:Hashed, reward:float):
         """
@@ -103,7 +107,7 @@ class QAgent(AtomicAgent, QAgentComponent):
             return INITIAL_Q
         return max(self.Q[state].values())
     
-    def _getMaxAction(self,state:Hashed) -> Hashed:
+    def _getMaxAction(self, state:Hashed) -> Hashed:
         """
         @param the state, Hashed
         @return the Hashed action  that has the maximum possible Q(state, action),
@@ -114,14 +118,13 @@ class QAgent(AtomicAgent, QAgentComponent):
         
         Qs = self._Q[state]
         maxQ = float('-inf')
-        maxAction=None
+        maxAction = None
         
-        for act in Qs.keys()
+        for act in Qs.keys():
             if Qs[act] > maxQ:
-                maxQ=Qs[act]
-                maxAction=act
+                maxQ = Qs[act]
+                maxAction = act
         return maxAction
-    
         
     def _chooseAction(self, state:Hashed) -> Hashed:
         """
@@ -144,12 +147,12 @@ class QAgent(AtomicAgent, QAgentComponent):
         If strategy B was picked but Q is empty, we revert to strategy A.
         @return our next action, Hashed 
         """
-        bestact=None
-        if random.uniform(0,1) <= self._p():
+        bestact = None
+        if random.uniform(0, 1) <= self._p():
             bestact = self._getMaxAction(state)
         
-        if bestact==None:
-            bestact=Hashed(self._environment.action_space.sample())
+        if bestact == None:
+            bestact = Hashed(self._environment.action_space.sample())
 
         return bestact
         
@@ -164,31 +167,3 @@ class QAgent(AtomicAgent, QAgentComponent):
         """
         return 1 / (1 + exp(self._s * (self._m - self._steps)))
 
-class Hashed:
-    """
-    Class that makes any object hashable by encapsulation.
-    Assumes the object is not changed.
-    If it is not immutable, and it is mutated,
-    then the hashcode will become wrong.
-    """
-    def __init__(self,obj):
-        self._obj = obj
-        try:
-            self._hash = hash(obj)
-        except TypeError:
-            self._hash = hash(str(obj))
-            
-    def get(self):
-        """
-        @return the original object
-        """
-        return self._obj
-    
-    def __eq__(self,other):
-        return isinstance(other, Hashed) and self._obj==other._obj
-    
-    def __hash__(self):
-        return self._hash
-        
-        
-        
