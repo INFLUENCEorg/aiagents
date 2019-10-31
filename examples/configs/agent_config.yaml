@@ -6,8 +6,8 @@ aliases:
   - &FactoryFloorIterativeGreedy aiagents.multi.FactoryFloorIterativeGreedy.FactoryFloorIterativeGreedy
 
 config:
-  #- &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
-  - &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+  - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
+    #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
     #- &RobotAgent aiagents.single.RandomAgent.RandomAgent
   - &iterationLimit 500
   - &explorationConstant 1
@@ -32,7 +32,7 @@ parameters:
                 id: "robot1"
                 parameters: {}
               otherAgents:
-                    class: *FactoryFloorIterativeGreedy
+                    class: *BasicComplexAgent
                     parameters: {}
                     subAgentList:
                       - class: *FactoryFloorAgent
