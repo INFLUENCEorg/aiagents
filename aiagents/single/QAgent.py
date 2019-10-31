@@ -93,8 +93,10 @@ class QAgent(AtomicAgent, QAgentComponent):
         new state with action.
         """
         Qsa = self.getQ(oldstate, action)
-        Qs1a = self._getmaxQ(newstate)
+        Qs1a = self._getMaxQ(newstate)
         Qnew = (1 - self._alpha) * Qsa + self._alpha * (reward + self._gamma * Qs1a)
+        if not oldstate in self._Q.keys():
+            self._Q[oldstate] = {}
         self._Q[oldstate][action] = Qnew
             
     def _getMaxQ(self, state):
@@ -103,7 +105,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         @return maximum possible Q(state, action) for any action, or INITIAL_Q 
         if state does not have any Q value.
         """
-        if not state in self.Q.keys():
+        if not state in self._Q.keys():
             return INITIAL_Q
         return max(self.Q[state].values())
     
