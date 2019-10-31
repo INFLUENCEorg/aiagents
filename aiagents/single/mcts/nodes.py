@@ -104,7 +104,7 @@ class StateNode(TreeNode):
             #agentActionNo += 1
             agentAction = self.treeAgent.step(self.getState(), self.immediateReward, self.isTerminal)
 
-            key = str(agentAction)
+            key = tuple(agentAction.items())
             if key not in self._children.keys():
                 self._children[key] = ActionNode(agentAction, self)
                 if not self._children[key].isFullyExpanded:
@@ -185,7 +185,7 @@ class ActionNode(TreeNode):
         if(self.otherAgents):
             otherActions = self.otherAgents.step(self._parent.getState(), self._parent.immediateReward, self._parent.isTerminal)
             actions=copy.deepcopy(otherActions)
-            otherActionsRep = str(otherActions)
+            otherActionsRep = tuple(otherActions.items())
         else:
             actions = {}
             otherActionsRep = ""
@@ -193,7 +193,7 @@ class ActionNode(TreeNode):
         actions.update(self.getAction())
         state, reward, done, info = simulator.step(actions)
         
-        key = str(state)+otherActionsRep
+        key = (state, otherActionsRep)
         if key not in self._children.keys():
             self._children[key] = StateNode(state, reward, done, self)
         self._children[key].numExpands += 1
