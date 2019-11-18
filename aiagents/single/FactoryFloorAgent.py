@@ -10,7 +10,7 @@ import math
 import operator
 
 def getPath(source, destination, pathDict):
-    return pathDict[str(source)][str(destination)]
+    return pathDict[tuple(source)][tuple(destination)]
 
 def getDistance(path):
     return len(path)-1
@@ -24,7 +24,7 @@ def setTargetPosition(positionEvaluationDictionary, socialOrder):
 def evaluateAllPositions(state, robotpos, pathDict):
     positionEvaluation = {}
     for task in state.tasks:
-        taskpos = str(task.getPosition())
+        taskpos = tuple(task.getPosition())
         try:
             currentEvaluation = positionEvaluation[taskpos]
         except KeyError:
@@ -54,15 +54,21 @@ class FactoryFloorAgent(AtomicAgent):
         self._ACTIONS = dict(zip(environment.ACTIONS.values(), environment.ACTIONS.keys()))
         self._graph = FactoryGraph(environment.getMap())
         self.pathDict = dict(networkx.all_pairs_dijkstra_path(self._graph))
-        self._mapping = { "[0 -1]":self._ACTIONS.get("UP"),
-                         '[ 0 -1]':self._ACTIONS.get("UP"),
-                         "[0 1]":self._ACTIONS.get("DOWN"),
-                         '[ 0 1]':self._ACTIONS.get("DOWN"),
-                         "[-1 0]":self._ACTIONS.get("LEFT"),
-                         '[-1  0]':self._ACTIONS.get("LEFT"),
-                         "[1 0]":self._ACTIONS.get("RIGHT"),
-                         '[1  0]':self._ACTIONS.get("RIGHT")
+        #self._mapping = { "[0 -1]":self._ACTIONS.get("UP"),
+        #                 '[ 0 -1]':self._ACTIONS.get("UP"),
+         #                "[0 1]":self._ACTIONS.get("DOWN"),
+        #                 '[ 0 1]':self._ACTIONS.get("DOWN"),
+        #                 "[-1 0]":self._ACTIONS.get("LEFT"),
+        #                 '[-1  0]':self._ACTIONS.get("LEFT"),
+        #                 "[1 0]":self._ACTIONS.get("RIGHT"),
+         #                '[1  0]':self._ACTIONS.get("RIGHT")
+         #                }
+        self._mapping = { (0,-1):self._ACTIONS.get("UP"),
+                          (0, 1):self._ACTIONS.get("DOWN"),
+                          (-1, 0):self._ACTIONS.get("LEFT"),
+                          (1,0):self._ACTIONS.get("RIGHT")
                          }
+
 
     def step(self, state: FactoryFloorState, reward=None, done=None) -> spaces.Dict:
         """
@@ -90,8 +96,8 @@ class FactoryFloorAgent(AtomicAgent):
         if getDistance(path) == 0:
             action = {self._agentId: self._ACTIONS.get("ACT")}
         else:
-            delta = self._toarray(path[1]) - self._toarray(path[0])
-            action = {self._agentId:self._mapping.get(str(delta))}
+            delta = tuple(array(path[1]) - array(path[0]))
+            action = {self._agentId:self._mapping.get(delta)}
 
         return action
 

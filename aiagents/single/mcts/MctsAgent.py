@@ -54,13 +54,18 @@ class MctsAgent(AtomicAgent):
             self._simulator = DiyFactoryFloorAdapter(self._simulator, diyBonus, self.agentId)
 
         self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
-        self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
 
         if 'otherAgents' in parameters:
+            rolloutAgentDict = copy.deepcopy(parameters['otherAgents'])
+            rolloutAgentList = rolloutAgentDict['subAgentList']
+            rolloutAgentList.append(parameters['rolloutAgent'])
+            rolloutAgentDict['subAgentList']=rolloutAgentList
+            self._rolloutAgent=createAgent(self._simulator, rolloutAgentDict)
             self._otherAgents = createAgent(self._simulator, parameters['otherAgents'])
         else:
             self._otherAgents = None
-       
+            self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
+
     def step(self, observation, reward, done):
         if done:
             # in current "Episode" implementation should never reach here

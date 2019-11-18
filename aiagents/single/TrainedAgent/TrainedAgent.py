@@ -39,9 +39,9 @@ class TrainedAgent(AtomicAgent):
         # softmax probabilities
         probabilities = self._model.predict(image_aug, batch_size=1)
         action = np.argmax(probabilities)
-        logging.debug("OBSERVATION " + str(observation))
-        logging.debug("PROBABILITIES " +str (probabilities))
-        logging.debug("PREDICTION ACTION " + str(action) + " FOR AGENT " + str(self._agentId))
+        #logging.debug("OBSERVATION " + str(observation))
+        #logging.debug("PROBABILITIES " +str (probabilities))
+        #logging.debug("PREDICTION ACTION " + str(action) + " FOR AGENT " + str(self._agentId))
 
         return {self._agentId: action}
 
