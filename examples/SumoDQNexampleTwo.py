@@ -42,14 +42,13 @@ def main():
     env = SumoGymAdapter(parameters['all'])
 
     # create a joint action space for the agent that controls two-intersection
-    packed_action_space = DecoratedSpace.create(PackedSpace(env.action_space, {"joint":["0", "1"]}))
+    packed_action_space = PackedSpace(env.action_space, {"joint":["0", "1"]})
     env = ModifiedGymEnv(env, packed_action_space)
 
     # here we initialize all agents (in that case one)
     Agents = []
     env.reset()
     for intersectionId in env.action_space.spaces.keys():
-        assert env.action_space.get(intersectionId).n == 4
         Agents.append(DQNAgent(agentId=intersectionId, environment=env, parameters=parameters['all']))
     complexAgent = BasicComplexAgent(Agents)
 

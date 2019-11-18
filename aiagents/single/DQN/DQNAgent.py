@@ -26,7 +26,8 @@ class DQNAgent(AtomicAgent):
         self.state = None
         self.prev_action = None
         # the number of actions
-        self.num_actions = environment.action_space.get(agentId).n
+        self.num_actions = environment.action_space.get(agentId).getSize()
+        print("Number of actions for agent {}: {}".format(agentId, self.num_actions))
         # instantiate a deep Q network
         self.deep_q_function = DeepQNetwork(self.num_actions, parameters)
         # step count - used to decide whether to do one training step
