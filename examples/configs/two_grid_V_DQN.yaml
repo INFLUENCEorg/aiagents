@@ -2,7 +2,7 @@ parameters:
   all:
     mode: 'train'
     load: false
-    name: 'Two_Grid_H_Test'
+    name: 'Two_Grid_V_Test'
     algorithm: DQN
     port: 8000
     gui: false
@@ -10,8 +10,8 @@ parameters:
 
     max_steps: 2.0e+6
     max_episode_steps: 5.0e+3
-    frame_height: 100 # TODO: 1000x0.2=200 (currently 5 meters per pixel)
-    frame_width: 150 # TODO: 1500x0.2=300 (currently 5 meters per pixel)
+    frame_height: 150 # TODO: 1000x0.2=200 (currently 5 meters per pixel)
+    frame_width: 100 # TODO: 1500x0.2=300 (currently 5 meters per pixel)
     num_frames: 4 # TODO: could try 10 for better performance later
     skip_frames: 1
     gamma: 0.99
@@ -34,8 +34,8 @@ parameters:
     ######################## SUMO SCEANRIO ########################
 
     # the scene
-    scene: 'two_grid_H'
-    tlphasesfile: 'two_grid_H.net.xml'
+    scene: 'two_grid_V'
+    tlphasesfile: 'two_grid_V.net.xml'
 
     # vehicle generation
     car_tm: 1000
@@ -46,13 +46,13 @@ parameters:
 
     # state representation
     box_bottom_corner: [0, 0]
-    box_top_corner: [1500, 1000]
+    box_top_corner: [1000, 1500]
     resolutionInPixelsPerMeterX: 0.1
     resolutionInPixelsPerMeterY: 0.1
     state_type: 'ldm_state' # The type of state to use as input for the network. ('bin' (Position Matrix), 'bin_light' (Position Light Matrix), 'value' (Value Matrix))
 
     # routes
-    route_starts: ['right_l1 l1_l0 l0_left', 'left_l0 l0_l1 l1_right', 'top_l0 l0_bottom', 'bottom_l0 l0_top', 'top_l1 l1_bottom', 'bottom_l1 l1_top']
+    route_starts: ['right_l1 l1_left', 'left_l1 l1_right', 'right_l0 l0_left', 'left_l0 l0_right', 'top_l1 l1_l0 l0_bottom', 'bottom_l0 l0_l1 l1_top']
     route_segments: []
     route_ends: []
     route_max_segments: 0
@@ -65,5 +65,5 @@ parameters:
     fast: false
     speed_dev: 0.0 # Can be used to vary the speeds of cars, according to a normal distribution with mean 1 and standard deviation speed_dev (SUMOs default is 0.1)
 
-    # traffic light positions
-    lightPositions: {"0":[[498.50, 507.24], [492.80, 498.38], [501.83, 492.18], [507.46, 501.57]], "1": [[998.50, 507.24], [992.59, 498.38], [1001.67, 492.18], [1007.44, 501.57]]}
+    # traffic light positions (I NEED TO CHANGE THIS)
+    lightPositions: {"0":[[498.40, 507.42], [492.54, 498.38], [501.58, 492.54], [507.45, 501.58]], "1": [[498.40, 1007.42], [492.54, 998.38], [501.58, 992.54], [507.45, 1001.58]]}
