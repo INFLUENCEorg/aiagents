@@ -27,7 +27,7 @@ def main():
     """
     if( len(sys.argv) > 1 ):
         configName = str(sys.argv[1])
-        filename = configName
+        filename = os.path.join(dirname, configName)
     else:
         print("Default config ")
         configName = "./configs/two_grid_H_DQN.yaml"
