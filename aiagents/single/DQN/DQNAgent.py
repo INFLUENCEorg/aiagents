@@ -45,8 +45,17 @@ class DQNAgent(AtomicAgent):
         # if done, reset the current state and previous action
         if done is True:
             self.state = None
-            self.prev_action=None
+            self.prev_action = None
             # a placeholder, this action will NOT be executed in the environment
+
+            # ################ DEBUGGING ####################
+            # from pympler import asizeof
+            # print("size of the replay memory:", asizeof.asizeof(self.replay_memory))
+            # print("size of tf network:", asizeof.asizeof(self.deep_q_function))
+            # print("size of state:", asizeof.asizeof(self.state))
+            # print("size of previous action:", asizeof.asizeof(self.prev_action))
+            # ################ DEBUGGING ####################
+
             return {self._agentId: 0}
 
         # update the current state
