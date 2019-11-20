@@ -48,13 +48,13 @@ class DQNAgent(AtomicAgent):
             self.prev_action = None
             # a placeholder, this action will NOT be executed in the environment
 
-            # ################ DEBUGGING ####################
-            # from pympler import asizeof
-            # print("size of the replay memory:", asizeof.asizeof(self.replay_memory))
-            # print("size of tf network:", asizeof.asizeof(self.deep_q_function))
-            # print("size of state:", asizeof.asizeof(self.state))
-            # print("size of previous action:", asizeof.asizeof(self.prev_action))
-            # ################ DEBUGGING ####################
+            ################ DEBUGGING ####################
+            from pympler import asizeof
+            print("size of the replay memory:", asizeof.asizeof(self.replay_memory))
+            print("size of tf network:", asizeof.asizeof(self.deep_q_function))
+            print("size of state:", asizeof.asizeof(self.state))
+            print("size of previous action:", asizeof.asizeof(self.prev_action))
+            ################ DEBUGGING ####################
 
             return {self._agentId: 0}
 

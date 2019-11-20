@@ -10,14 +10,14 @@ parameters:
 
     max_steps: 2.0e+6
     max_episode_steps: 5.0e+3
-    frame_height: 50 # TODO: 1000x0.2=200 (currently 5 meters per pixel)
-    frame_width: 75 # TODO: 1500x0.2=300 (currently 5 meters per pixel)
+    frame_height: 100 # TODO: 1000x0.2=200 (currently 5 meters per pixel)
+    frame_width: 150 # TODO: 1500x0.2=300 (currently 5 meters per pixel)
     num_frames: 4 # TODO: could try 10 for better performance later
     skip_frames: 1
     gamma: 0.99
     learning_rate: 2.5e-4
     batch_size: 32
-    memory_size: 10000 # TODO: 30000 - it is supposed to be 30000
+    memory_size: 100 # TODO: 30000 - it is supposed to be 30000
     train_frequency: 1
     save_frequency: 5.0e+4
     summary_frequency: 1.0e+4
@@ -47,8 +47,8 @@ parameters:
     # state representation
     box_bottom_corner: [0, 0]
     box_top_corner: [1500, 1000]
-    resolutionInPixelsPerMeterX: 0.05
-    resolutionInPixelsPerMeterY: 0.05
+    resolutionInPixelsPerMeterX: 0.1
+    resolutionInPixelsPerMeterY: 0.1
     state_type: 'ldm_state' # The type of state to use as input for the network. ('bin' (Position Matrix), 'bin_light' (Position Light Matrix), 'value' (Value Matrix))
 
     # routes
