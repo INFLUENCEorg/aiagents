@@ -2,13 +2,13 @@ parameters:
   all:
     mode: 'train'
     load: false
-    name: 'Two_Grid_H_Test'
+    name: 'Two_Grid_H_Debugging'
     algorithm: DQN
     port: 8000
     gui: false
     env_type: 'SUMO'
 
-    max_steps: 2.0e+6
+    max_steps: 1.0e+4
     max_episode_steps: 5.0e+3
     frame_height: 100 # TODO: 1000x0.2=200 (currently 5 meters per pixel)
     frame_width: 150 # TODO: 1500x0.2=300 (currently 5 meters per pixel)
@@ -18,7 +18,7 @@ parameters:
     learning_rate: 2.5e-4
     batch_size: 32
     memory_size: 100 # TODO: 30000 - it is supposed to be 30000
-    train_frequency: 1
+    train_frequency: 100
     save_frequency: 5.0e+4
     summary_frequency: 1.0e+4
     tensorboard: false

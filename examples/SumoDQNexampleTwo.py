@@ -37,7 +37,7 @@ def main():
 
     print( "Config name " + configName )
     logging.info("Starting example DQN agent")
-    logoutput = io.StringIO("episode output log")
+
     parameters = getParameters(filename)
 
     env = SumoGymAdapter(parameters['all'])
@@ -53,11 +53,16 @@ def main():
         Agents.append(DQNAgent(agentId=intersectionId, environment=env, parameters=parameters['all']))
     complexAgent = BasicComplexAgent(Agents)
 
+    experiment_name = parameters["all"]["name"] 
+    log_stream = open("results/{}.json".format(experiment_name), "w", encoding="utf-8")
+
     experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=False)
-    # experiment.addListener(JsonLogger(logoutput))
+    experiment.addListener(JsonLogger(log_stream))
     experiment.run()
 
-    #print("json output:", logoutput.getvalue()) # logs from all episodes within the experiment
+    log_stream.close()
+
+    # print("json output:", logoutput.getvalue()) # logs from all episodes within the experiment
 
 if __name__ == "__main__":
         main()
