@@ -54,7 +54,9 @@ def main():
     complexAgent = BasicComplexAgent(Agents)
 
     experiment_name = parameters["all"]["name"] 
-    log_stream = open("results/{}.json".format(experiment_name), "w", encoding="utf-8")
+    
+    file_path = os.path.abspath(os.path.dirname(__file__))
+    log_stream = open(os.path.join(file_path, "results/{}.json".format(experiment_name)), "w", encoding="utf-8")    
 
     experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=False)
     experiment.addListener(JsonLogger(log_stream))
