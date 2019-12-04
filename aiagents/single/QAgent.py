@@ -5,6 +5,7 @@ from gym import spaces
 from math import exp
 import random
 from aiagents.utils.Hashed import Hashed
+from aienvs.gym.DecoratedSpace import DecoratedSpace
 
 INITIAL_Q = 0
 
@@ -36,6 +37,9 @@ class QAgent(AtomicAgent, QAgentComponent):
     def __init__(self, switchId:str, environment:Env,
                  parameters:dict={'alpha':0.1, 'gamma':1, 'm':500, 's':0.01}):
         super().__init__(switchId, environment, parameters)
+        # determine our action space, subset of env action_space
+        full_action_space = DecoratedSpace.create(environment.action_space)
+        self.action_space = full_action_space.get(switchId)
         self._lastAction = None
         self._lastState = None
         self._alpha = parameters['alpha']
@@ -46,7 +50,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         self._steps = 0
 
     # Override
-    def step(self, observation=None, reward:float=None, done:bool=None) -> spaces.Dict:
+    def step(self, observation=None, reward:float=None, done:bool=None) -> dict:
         # observation is the current state
         newstate = Hashed(observation)
         if self._lastAction != None:
@@ -56,7 +60,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         self._lastState = newstate
         self._lastAction = action
         self._steps = self._steps + 1
-        return spaces.Dict({self.agentId(), action})
+        return {self.agentId: action}
 
     # Override
     def getQ(self, state, action) -> float:
@@ -67,7 +71,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         return None  # what should this do anyway?
     
     ################### PRIVATE ##############
-    def _getQ(self, state:Hashed, action:Hashed):
+    def _getQ(self, state:Hashed, action:int):
         """
         @param state the state, not Hashed
         @param action the action, not Hashed
@@ -79,7 +83,7 @@ class QAgent(AtomicAgent, QAgentComponent):
                 return self._Q[state][action]
         return INITIAL_Q
     
-    def _updateQ(self, oldstate:Hashed, action:Hashed, newstate:Hashed, reward:float):
+    def _updateQ(self, oldstate:Hashed, action:int, newstate:Hashed, reward:float):
         """
         Updates our Q[state][act]->float dict 
         according to the wiki formula.
@@ -87,7 +91,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         got in new state with a reward
         _lastState and _lastAction MUST be set properly.
         @param oldstate the old state, Hashed
-        @param action, the action that brought us from old to new state. Hashed
+        @param action, the action that brought us from old to new state. int
         @param newstate the new state, Hashed
         @param reward the reward associated with going from the old to the 
         new state with action.
@@ -109,10 +113,10 @@ class QAgent(AtomicAgent, QAgentComponent):
             return INITIAL_Q
         return max(self._Q[state].values())
     
-    def _getMaxAction(self, state:Hashed) -> Hashed:
+    def _getMaxAction(self, state:Hashed) -> int:
         """
         @param the state, Hashed
-        @return the Hashed action  that has the maximum possible Q(state, action),
+        @return the action (int) that has the maximum possible Q(state, action),
         or None if there is no Q(state,action)
         """
         if not state in self._Q:
@@ -128,7 +132,7 @@ class QAgent(AtomicAgent, QAgentComponent):
                 maxAction = act
         return maxAction
         
-    def _chooseAction(self, state:Hashed) -> Hashed:
+    def _chooseAction(self, state:Hashed) -> int:
         """
         @param state the Hashed state
         The Q agent chooses either 
@@ -147,14 +151,16 @@ class QAgent(AtomicAgent, QAgentComponent):
         If 0, behaviour is constant everywhere, determined only by m
 
         If strategy B was picked but Q is empty, we revert to strategy A.
-        @return our next action, Hashed 
+        @return our next action, int (the index in the action_space which is a decoratedspace) 
         """
         bestact = None
         if random.uniform(0, 1) <= self._p():
             bestact = self._getMaxAction(state)
         
         if bestact == None:
-            bestact = Hashed(self._environment.action_space.sample())
+            # sample: Dict -> OrderedDict
+            # bestact = Hashed(self.action_space.sample())
+            bestact = random.randint(0, self.action_space.getSize() - 1)
 
         return bestact
         

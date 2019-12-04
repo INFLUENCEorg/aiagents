@@ -46,7 +46,7 @@ def main():
     env = ModifiedGymEnv(basicEnv, packedActionSpace)
 
     agent1 = RandomAgent("e1", env)
-    agent2 = QAgent("e23", PackedSpace(env), {'alpha':0.4, 'gamma':1, 'm':-500000, 's':1})
+    agent2 = QAgent("e23", env, {'alpha':0.4, 'gamma':1, 'm':-500000, 's':1})
     complexAgent = BasicComplexAgent([agent1, agent2])
     
     episode = Episode(complexAgent, env, None, True, 0)
