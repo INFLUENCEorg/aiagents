@@ -4,6 +4,7 @@ from aiagents.QAgentComponent import QAgentComponent
 from gym import spaces
 from aienvs.gym.DecoratedSpace import DecoratedSpace
 from aienvs.Environment import Env
+from aienvs.gym.ModifiedActionSpace import ModifiedActionSpace
 
 
 class QCoordinator(BasicComplexAgent):
@@ -21,7 +22,10 @@ class QCoordinator(BasicComplexAgent):
 
     def __init__(self, agentComponentList:list, environment:Env, parameters:dict=None):
         """
-        @param AgentComponentList: a list of QAgentComponent. Size must be >=1
+        @param AgentComponentList: a list of QAgentComponent. Size must be >=1.
+        The agent environments should be equal to our environment,
+        or to a Packed version of it. We can't check this because
+        environments do not implement equals at this moment.
         @param environment the openAI Gym Env. Must have actionspace of type Dict
         @param parameters the optional init dictionary with parameters  
         """
@@ -31,9 +35,9 @@ class QCoordinator(BasicComplexAgent):
         if len(agentComponentList) == 0:
             raise ValueError("There must be at least 1 agent in the list")
         
-        for component in agentComponentList:
-            if not isinstance(component, QAgentComponent):
-                raise ValueError("All agent components for QCoordinator must be QAgentComponent but found " + component)
+        for agent in agentComponentList:
+            if not isinstance(agent, QAgentComponent):
+                raise ValueError("All agent components for QCoordinator must be QAgentComponent but found " + agent)
 
         super(QCoordinator, self).__init__(agentComponentList, environment, parameters)
         self.actionspace = DecoratedSpace.create(environment.action_space)
@@ -94,8 +98,14 @@ class QCoordinator(BasicComplexAgent):
         for n in range(0, self.actionspace.getSize()):
             action = self.actionspace.getById(n)
             totalQ = 0
-            for agentComp in self._agentSubcomponents:
-                totalQ = totalQ + agentComp.getQ(observation, action)
+            for agent in self._agentSubcomponents:
+                env = agent.getEnvironment().action_space
+                # HACK #7, pack action if agents are using packed space
+                if isinstance(env, ModifiedActionSpace):
+                    action1 = env.pack(action)
+                else:
+                    action1 = action
+                totalQ = totalQ + agent.getQ(observation, action1[agent.agentId])
             if totalQ > bestTotalQ:
                 bestAction = action
                 bestTotalQ = totalQ
