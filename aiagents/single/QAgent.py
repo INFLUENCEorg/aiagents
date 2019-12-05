@@ -64,7 +64,7 @@ class QAgent(AtomicAgent, QAgentComponent):
 
     # Override
     def getQ(self, state, action) -> float:
-        return self._getQ(Hashed(state), Hashed(action))
+        return self._getQ(Hashed(state), action)
     
     # Override
     def getV(self, state):
@@ -103,9 +103,9 @@ class QAgent(AtomicAgent, QAgentComponent):
             self._Q[oldstate] = {}
         self._Q[oldstate][action] = Qnew
             
-    def _getMaxQ(self, state):
+    def _getMaxQ(self, state:Hashed):
         """
-        @param the state, hashable
+        @param the state, Hashed
         @return maximum possible Q(state, action) for any action, or INITIAL_Q 
         if state does not have any Q value.
         """
@@ -159,7 +159,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         
         if bestact == None:
             # sample: Dict -> OrderedDict
-            # bestact = Hashed(self.action_space.sample())
+            # bestact = something like self.action_space.sample()
             bestact = random.randint(0, self.action_space.getSize() - 1)
 
         return bestact
