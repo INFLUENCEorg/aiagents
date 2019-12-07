@@ -43,13 +43,12 @@ def main():
     for intersectionId in env.action_space.spaces.keys():
         PPOAgents.append(PPOAgent(agentId=intersectionId, environment=env, parameters=parameters['all']))
     complexAgent = BasicComplexAgent(PPOAgents)
-    
+
     experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=False)
     experiment.addListener(JsonLogger(logoutput))
     experiment.run()
 
     #print("json output:", logoutput.getvalue()) # logs from all episodes within the experiment
-	
+
 if __name__ == "__main__":
         main()
-	
