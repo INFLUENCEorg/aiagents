@@ -12,7 +12,7 @@ class AgentComponent(ABC):
     """
 
     @abstractmethod
-    def step(self, observation=None, reward:float=None, done:bool=None) -> spaces.Dict:
+    def step(self, observation=None, reward:float=None, done:bool=None) -> dict:
         """
         Let's the agentcomponent decide on its action.
         This is called after the env.step() was called to get the observation and 
@@ -25,7 +25,8 @@ class AgentComponent(ABC):
         @param reward the reward received from *last action*
         @param done this is true if the environment reached the final state.
 
-        @return an action: a dictionary of controller ids and respective actions
+        @return an action: a dictionary of controller (enviroment entity) ids 
+        and respective actions.
         """
         pass
 
