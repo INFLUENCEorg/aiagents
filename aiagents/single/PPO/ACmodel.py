@@ -5,8 +5,10 @@ import tensorflow.contrib.layers as c_layers
 import numpy as np
 
 
-class Model(object):
-
+class ACmodel(object):
+    """
+    Creates an actor critic model object.
+    """
     def __init__(self, parameters, num_actions):
         self.act_size = num_actions
         self.convolutional = parameters['convolutional']
@@ -19,6 +21,9 @@ class Model(object):
         self.sess = tf.Session(graph=self.graph)
 
     def initialize_graph(self):
+        """
+        Initializes the weights in the Tensorflow graph
+        """
         with self.graph.as_default():
             self.saver = tf.train.Saver()
             init = tf.global_variables_initializer()
@@ -26,11 +31,11 @@ class Model(object):
 
     def save_graph(self, time_step):
         """
-        Retrieve network weights store them.
+        Retrieve network weights to store them.
         """
         with self.graph.as_default():
             file_name = os.path.join('models', self.parameters['name'],
-                                     'factor'+str(0), 'network')
+                                     'network')
             print("Saving networks...")
             self.saver.save(self.sess, file_name, time_step)
             print("Saved!")
@@ -41,27 +46,30 @@ class Model(object):
         """
         with self.graph.as_default():
             self.saver = tf.train.Saver()
-            checkpoint_dir = os.path.join('models', self.parameters['name'],
-                                          'factor'+str(0))
+            checkpoint_dir = os.path.join('models', self.parameters['name'])
             ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
             self.saver.restore(self.sess, ckpt.model_checkpoint_path)
 
     def build_main_model(self):
         """
-        Builds neural network
+        Builds neural network model to approximate policy and value functions
         """
-        self.observation = tf.placeholder(shape=[None,
-                                                 self.parameters["frame_height"],
-                                                 self.parameters["frame_width"],
-                                                 self.parameters["num_frames"]],
-                                          dtype=tf.float32, name='observation')
+        if self.parameters['obs_type'] == 'image':
+            self.observation = tf.placeholder(shape=[None,
+                                                     self.parameters["frame_height"],
+                                                     self.parameters["frame_width"],
+                                                     self.parameters["num_frames"]],
+                                              dtype=tf.float32, name='observation')
+        else:
+            self.observation = tf.placeholder(shape=[None,
+                                                     self.parameters["vec_size"]],
+                                              dtype=tf.float32, name='observation')
 
         hidden = self.observation
         # normalize input
         if self.parameters['env_type'] == 'atari':
-            self.observation_norm = tf.cast(self.observation, tf.float32) / 148.
+            self.observation_norm = tf.cast(self.observation, tf.float32) / 255.
             hidden = self.observation_norm
-
         if self.convolutional:
             self.hidden_conv = net.cnn(self.observation,
                                        self.parameters["num_conv_layers"],
@@ -70,6 +78,11 @@ class Model(object):
                                        self.parameters["strides"],
                                        tf.nn.relu, False, 'cnn')
             hidden = c_layers.flatten(self.hidden_conv)
+
+        if self.fully_connected:
+            hidden = net.fcn(hidden, self.parameters["num_fc_layers"],
+                             self.parameters["num_fc_units"],
+                             tf.nn.relu, 'fcn')
 
         if self.recurrent:
             self.prev_action = tf.placeholder(shape=[None], dtype=tf.int32,
@@ -91,10 +104,8 @@ class Model(object):
                                              self.parameters['num_rec_units'],
                                              self.seq_len,
                                              'rnn')
-        if self.fully_connected:
-            hidden = net.fcn(hidden, self.parameters["num_fc_layers"],
-                             self.parameters["num_fc_units"],
-                             tf.nn.relu, 'fcn')
+
+
         self.hidden = hidden
 
     def build_influence_model(self):
@@ -105,19 +116,19 @@ class Model(object):
             """
             """
             shape = hidden_conv.get_shape().as_list()
-            num_regions = shape[0]*shape[1]
-            hidden_conv = tf.reshape(hidden_conv, [num_regions, shape[2]])
+            num_regions = shape[1]*shape[2]
+            hidden_conv = tf.reshape(hidden_conv, [-1, num_regions, shape[3]])
             linear_conv = net.fcn(hidden_conv, 1,
                                   self.parameters['num_att_units'], None,
                                   'att', 'att1_{}')
             linear_hidden = net.fcn(inf_hidden, 1,
                                     self.parameters['num_att_units'], None,
                                     'att', 'att2_{}')
-            context = tf.nn.tanh(linear_conv + linear_hidden)
+            context = tf.nn.tanh(linear_conv + tf.expand_dims(linear_hidden, 1))
             attention_weights = net.fcn(context, 1, [1], None, 'att')
-            attention_weights = tf.nn.softmax(attention_weights, axis=0)
-            inf_hidden = tf.reduce_sum(attention_weights*hidden_conv, axis=0)
-            return [inf_hidden]
+            attention_weights = tf.nn.softmax(attention_weights, axis=1)
+            inf_hidden = tf.reduce_sum(attention_weights*hidden_conv, axis=1)
+            return inf_hidden
 
         def select_dpatch(hidden_conv):
             """
@@ -140,49 +151,57 @@ class Model(object):
         def unroll(iter, state, hidden_states):
             """
             """
-            # Retrieve the initial value of each sequence
-            s = tf.reshape(tf.cast(iter/self.parameters['inf_seq_len'], tf.int32), [])
-            h = tf.reshape(self.inf_state_in.h[s], [1, self.parameters['inf_num_rec_units']])
-            c = tf.reshape(self.inf_state_in.c[s], [1, self.parameters['inf_num_rec_units']])
-            state0 = tf.contrib.rnn.LSTMStateTuple(c, h)
-            # If first element of sequence use intial state else use last state
-            state = tf.cond(tf.equal(tf.mod(iter, self.parameters['inf_seq_len']), 0),
-                            lambda: state0,
-                            lambda: state)
+            hidden_conv = tf.cond(self.update_bool,
+                                  lambda: tf.gather_nd(self.hidden_conv,
+                                                       self.indices+iter),
+                                  lambda: self.hidden_conv)
+            inf_prev_action = tf.cond(self.update_bool,
+                                      lambda: tf.gather_nd(self.inf_prev_action,
+                                                           self.indices+iter),
+                                      lambda: self.inf_prev_action)
             inf_hidden = state.h
-            hidden_conv = self.hidden_conv[iter, :, :, :]
+
             if self.parameters['attention']:
                 inf_hidden = attention(hidden_conv, inf_hidden)
             else:
                 inf_hidden = select_dpatch(hidden_conv)
-            inf_prev_action_onehot = c_layers.one_hot_encoding(self.inf_prev_action[iter],
+
+
+            inf_prev_action_onehot = c_layers.one_hot_encoding(inf_prev_action,
                                                                self.act_size)
-            inf_hidden = tf.concat([inf_hidden, [inf_prev_action_onehot]], axis=1)
+            inf_hidden = tf.concat([inf_hidden, inf_prev_action_onehot], axis=1)
             inf_hidden, state = net.rnn(inf_hidden, state,
                                         self.parameters['inf_num_rec_units'],
                                         self.inf_seq_len, 'inf_rnn')
-            hidden_states = hidden_states.write(iter, inf_hidden[0])
+            hidden_states = hidden_states.write(iter, inf_hidden)
             iter += 1
+
             return [iter, state, hidden_states]
 
         def condition(iter, state, hidden_states):
-            max_iter = tf.shape(self.observation)[0]
-            return tf.less(iter, max_iter)
+            return tf.less(iter, self.n_iterations)
 
-        inf_c = tf.placeholder(tf.float32, [None,
-                                            self.parameters['inf_num_rec_units']],
+        inf_c = tf.placeholder(tf.float32,
+                               [None, self.parameters['inf_num_rec_units']],
                                name='inf_c_state')
-        inf_h = tf.placeholder(tf.float32, [None,
-                                            self.parameters['inf_num_rec_units']],
+        inf_h = tf.placeholder(tf.float32,
+                               [None, self.parameters['inf_num_rec_units']],
                                name='inf_h_state')
         self.inf_state_in = tf.contrib.rnn.LSTMStateTuple(inf_c, inf_h)
         self.inf_seq_len = tf.placeholder(tf.int32, None,
                                           name='inf_sequence_length')
+        self.n_iterations = tf.placeholder(tf.int32, None,
+                                          name='n_iterations')
         self.inf_prev_action = tf.placeholder(shape=[None], dtype=tf.int32,
                                               name='inf_prev_action')
+        size = self.parameters['batch_size']*self.parameters['num_workers']
+        self.indices = np.arange(0, size, self.parameters['inf_seq_len'])
+        self.indices = tf.constant(np.reshape(self.indices, [-1, 1]),
+                                   dtype=tf.int32)
+        self.update_bool = tf.placeholder(tf.bool, [], name='update_bool')
         # outputs of the loop cant change size, thus we need to initialize
         # the hidden states vector and overwrite with new values
-        hidden_states = tf.TensorArray(dtype=tf.float32, size=tf.shape(self.observation)[0])
+        hidden_states = tf.TensorArray(dtype=tf.float32, size=self.n_iterations)
         # Unroll the RNN to fetch intermediate internal states and compute
         # attention weights
         _, self.inf_state_out, hidden_states = tf.while_loop(condition,
@@ -191,6 +210,52 @@ class Model(object):
                                                               self.inf_state_in,
                                                               hidden_states])
         self.inf_hidden = hidden_states.stack()
+        self.inf_hidden = tf.reshape(tf.transpose(self.inf_hidden,
+                                                  perm=[1,0,2]),
+                                     [-1, self.parameters['inf_num_rec_units']])
+
+    def build_actor_critic(self):
+        """
+        Adds actor and critic heads to Tensorflow graph
+        """
+        if self.influence:
+            hidden = tf.concat([self.hidden, self.inf_hidden], axis=1)
+            hidden = net.fcn(hidden, self.parameters["inf_num_fc_layers"],
+                             self.parameters["inf_num_fc_units"],
+                             tf.nn.relu, 'inf_fcn')
+        else:
+            hidden = self.hidden
+
+        self.logits = tf.layers.dense(hidden, self.act_size,
+                                      activation=None, use_bias=False,
+                                      kernel_initializer=
+                                      c_layers.variance_scaling_initializer(
+                                       factor=0.01))
+
+        self.action_probs = tf.nn.softmax(self.logits, name="action_probs")
+        self.action = tf.reduce_sum(tf.multinomial(self.logits, 1), axis=1)
+        self.action = tf.identity(self.action, name="action")
+
+        self.value = tf.reduce_sum(tf.layers.dense(hidden, 1, activation=None),
+                                   axis=1)
+        self.value = tf.identity(self.value, name="value_estimate")
+
+        self.entropy = -tf.reduce_sum(self.action_probs
+                                      * tf.log(self.action_probs + 1e-10),
+                                      axis=1)
+        self.action_holder = tf.placeholder(shape=[None], dtype=tf.int32,
+                                            name='action_holder')
+        self.actions_onehot = c_layers.one_hot_encoding(self.action_holder,
+                                                        self.act_size)
+
+        self.old_action_probs = tf.placeholder(shape=[None, self.act_size],
+                                               dtype=tf.float32,
+                                               name='old_probs')
+
+        self.action_prob = tf.reduce_sum(self.action_probs*self.actions_onehot,
+                                         axis=1)
+        self.old_action_prob = tf.reduce_sum(self.old_action_probs
+                                             * self.actions_onehot, axis=1)
 
     def build_optimizer(self):
         """

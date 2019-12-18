@@ -17,7 +17,7 @@ class QAgent(AtomicAgent, QAgentComponent):
     from the environment. Notice that the reward is received only
     then next time step is called, therefore the Q lags behind one step.
     see https://en.wikipedia.org/wiki/Q-learning.
-    
+
     The Q learning algorithm has two parameters:
     * alpha in [0,1] the learning rate. Bigger means that new rewards
         are having more effect on the Q, so that learning goes
@@ -28,7 +28,7 @@ class QAgent(AtomicAgent, QAgentComponent):
        to the current Q.
 
     see also chooseAction which has  2 parameters
-    * m: the midpoint of the sigmoid. This determines where the 
+    * m: the midpoint of the sigmoid. This determines where the
         behavour switches from A to B.
     * s: the steepness of the cross-over from A to B behaviour. values closer
         to 1 give a slower change from A to B.
@@ -55,7 +55,7 @@ class QAgent(AtomicAgent, QAgentComponent):
         newstate = Hashed(observation)
         if self._lastAction != None:
             self._updateQ(self._lastState, self._lastAction, newstate, reward)
-        
+
         action = self._chooseAction(newstate)
         self._lastState = newstate
         self._lastAction = action
@@ -64,12 +64,12 @@ class QAgent(AtomicAgent, QAgentComponent):
 
     # Override
     def getQ(self, state, action) -> float:
-        return self._getQ(Hashed(state), Hashed(action))
+        return self._getQ(Hashed(state), action)
     
     # Override
     def getV(self, state):
         return None  # what should this do anyway?
-    
+
     ################### PRIVATE ##############
     def _getQ(self, state:Hashed, action:int):
         """
@@ -85,15 +85,15 @@ class QAgent(AtomicAgent, QAgentComponent):
     
     def _updateQ(self, oldstate:Hashed, action:int, newstate:Hashed, reward:float):
         """
-        Updates our Q[state][act]->float dict 
+        Updates our Q[state][act]->float dict
         according to the wiki formula.
-        action was applied in old state, and we 
+        action was applied in old state, and we
         got in new state with a reward
         _lastState and _lastAction MUST be set properly.
         @param oldstate the old state, Hashed
         @param action, the action that brought us from old to new state. int
         @param newstate the new state, Hashed
-        @param reward the reward associated with going from the old to the 
+        @param reward the reward associated with going from the old to the
         new state with action.
         """
         Qsa = self._getQ(oldstate, action)
@@ -103,16 +103,16 @@ class QAgent(AtomicAgent, QAgentComponent):
             self._Q[oldstate] = {}
         self._Q[oldstate][action] = Qnew
             
-    def _getMaxQ(self, state):
+    def _getMaxQ(self, state:Hashed):
         """
-        @param the state, hashable
+        @param the state, Hashed
         @return maximum possible Q(state, action) for any action, or INITIAL_Q 
         if state does not have any Q value.
         """
         if not state in self._Q.keys():
             return INITIAL_Q
         return max(self._Q[state].values())
-    
+        
     def _getMaxAction(self, state:Hashed) -> int:
         """
         @param the state, Hashed
@@ -121,11 +121,11 @@ class QAgent(AtomicAgent, QAgentComponent):
         """
         if not state in self._Q:
             return None
-        
+
         Qs = self._Q[state]
         maxQ = float('-inf')
         maxAction = None
-        
+
         for act in Qs.keys():
             if Qs[act] > maxQ:
                 maxQ = Qs[act]
@@ -135,10 +135,10 @@ class QAgent(AtomicAgent, QAgentComponent):
     def _chooseAction(self, state:Hashed) -> int:
         """
         @param state the Hashed state
-        The Q agent chooses either 
-        (A) an arbitrary action 
+        The Q agent chooses either
+        (A) an arbitrary action
         (B) the best action, that one which currently has highest Q
-    
+
         The choice between A and B is made by the function p(N) (see below).
         p(N) is the chance that B is chosen (so 1-p is the chance for A)
         It has two parameters:
@@ -156,22 +156,21 @@ class QAgent(AtomicAgent, QAgentComponent):
         bestact = None
         if random.uniform(0, 1) <= self._p():
             bestact = self._getMaxAction(state)
-        
+
         if bestact == None:
             # sample: Dict -> OrderedDict
-            # bestact = Hashed(self.action_space.sample())
+            # bestact = something like self.action_space.sample()
             bestact = random.randint(0, self.action_space.getSize() - 1)
 
         return bestact
-        
+
     def _p(self):
         """
         p(N) = 1/(1+exp(s(m - N)) a adjustable sigmoid function
-        
+
         p(N) has two parameters:
-        * m: the midpoint of the sigmoid. 
+        * m: the midpoint of the sigmoid.
         * s: the steepness of the cross-over from A to B behaviour.
         N is the number of steps taken so far.
         """
         return 1 / (1 + exp(self._s * (self._m - self._steps)))
-

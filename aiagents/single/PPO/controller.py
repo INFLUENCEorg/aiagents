@@ -12,13 +12,12 @@ class Controller(object):
     def __init__(self, parameters:dict, action_space, logger=None):
         """
         @param parameters a dictionary with all kinds of options for the run.
-        @param action_map  a dict with 
-        and a list of allowed actions as values 
-        @param logger 
+        @param action_map  a dict with
+        and a list of allowed actions as values
+        @param logger
         """
         # Initialize all factor objects here
         self._parameters = parameters
-        self._logger = logger
 
         self._num_actions = {}
         self._step = {}
@@ -42,30 +41,6 @@ class Controller(object):
         evaluate_policy_output.update(self._model.evaluate_policy(step_output['obs'], step_output['prev_action']))
         return evaluate_policy_output
 
-    def _coordination(self, Q):
-        """
-        Runs coordination algorithm and returns the corresponding
-        actions. Not using epsilon (for now) since it is used
-        in evaluation only (because Transfer Planning).
-        """
-        # TODO: add coordination algorithms
-        global_action = []
-        i_index = self._epsilon_greedy([Q], 1.0)
-        global_action.append(i_index)
-        print(("Global action: {}".format(global_action)))
-        return global_action
-
-    def _get_last_transition_info(self):
-        """
-        Get each factor's TD-error given the transition information.
-        """
-        abs_td = []
-        batch = self._replay_memory.get_latest_entry()
-        td_error = self._model.td_error(batch)
-        abs_td.append(np.abs(td_error))
-
-        return abs_td
-
     def _update(self):
         """
         Sample a batch from the replay memory (if it is completely filled) and
@@ -78,15 +53,6 @@ class Controller(object):
         Check if the replay memories are filled.
         """
         return self._replay_memory.full()
-
-    def _reset(self):
-        """
-        Reset the Q-functions. This is necessary for Recurrent Neural Networks.
-        """
-        if not self._replay_memory.full():
-            print(("Replay Memory filled for {}%".format(self._replay_memory.fullness())))
-
-        self._model.reset()
 
     def _save_graph(self, time_step):
         """
@@ -122,7 +88,6 @@ class Controller(object):
             for key in self._stats.keys():
                 if len(self._stats[key]) > 0:
                     stat_mean = float(np.mean(self._stats[key]))
-                    #self._logger.log_scalar(key, stat_mean, self._step)
                     summary.value.add(tag='{}'.format(key), simple_value=stat_mean)
                     self._stats[key] = []
             self._summary_writer.add_summary(summary, self._step)

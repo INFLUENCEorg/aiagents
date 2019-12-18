@@ -19,3 +19,5 @@ class AtomicAgent(AgentComponent):
     def agentId(self):
         return self._agentId
 
+    def getEnvironment(self):
+        return self._environment
