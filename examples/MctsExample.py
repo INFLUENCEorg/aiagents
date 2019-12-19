@@ -11,6 +11,7 @@ from aienvs.loggers.PickleLogger import PickleLogger
 import copy
 import sys
 import pickle
+from scipy import stats
 
 logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
@@ -58,12 +59,12 @@ def main():
     experiment = Experiment(complexAgent, env, maxSteps, render=True)
     experiment.addListener(JsonLogger(logoutput))
     experiment.addListener(PickleLogger(logoutputpickle))
-    stats, confidence_ints = experiment.run()
+    rewards = experiment.run()
+    statistics, confidence_ints = stats.describe(rewards), stats.bayes_mvs(rewards)
     logoutputpickle.close()
 
     print("json output:", logoutput.getvalue())
-
-    print("\n\nREWARD STATS: " + str(stats) + " \nCONFIDENCE INTERVALS " + str(confidence_ints))
+    print("\n\nREWARD STATS: " + str(statistics) + " \nCONFIDENCE INTERVALS " + str(confidence_ints))
 
  #   instream = open('./file3', 'rb')
  #   while True:

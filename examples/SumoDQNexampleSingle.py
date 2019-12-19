@@ -1,7 +1,8 @@
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import logging
 from aienvs.Sumo.SumoGymAdapter import SumoGymAdapter
-from aiagents.single.PPO.PPOAgent import PPOAgent
+from aiagents.single.DQN.DQNAgent import DQNAgent
 from aiagents.multi.BasicComplexAgent import BasicComplexAgent
 import random
 from aienvs.runners.Episode import Episode
@@ -12,10 +13,10 @@ import io
 from aienvs.loggers.PickleLogger import PickleLogger
 import copy
 import sys
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
+import tensorflow as tf
+tf.get_logger().setLevel('ERROR')
 
 def main():
     """
@@ -26,23 +27,23 @@ def main():
         filename = configName
     else:
         print("Default config ")
-        configName = "./configs/new_traffic_loop_ppo.yaml"
+        configName = "./configs/two_grid_H_DQN.yaml"
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, configName)
 
     print( "Config name " + configName )
-    logging.info("Starting example PPO agent")
+    logging.info("Starting example DQN agent")
     logoutput = io.StringIO("episode output log")
     parameters = getParameters(filename)
 
     env = SumoGymAdapter(parameters['all'])
 
     # here we initialize all agents (in that case one)
-    PPOAgents = []
+    Agents = []
     env.reset()
     for intersectionId in env.action_space.spaces.keys():
-        PPOAgents.append(PPOAgent(agentId=intersectionId, environment=env, parameters=parameters['all']))
-    complexAgent = BasicComplexAgent(PPOAgents)
+        Agents.append(DQNAgent(agentId=intersectionId, environment=env, parameters=parameters['all']))
+    complexAgent = BasicComplexAgent(Agents)
 
     experiment = Experiment(complexAgent, env, parameters['all']['max_steps'], parameters['all']['seedlist'], render=False)
     experiment.addListener(JsonLogger(logoutput))
