@@ -9,6 +9,10 @@ from aienvs.gym.ModifiedActionSpace import ModifiedActionSpace
 
 class QCoordinator(BasicComplexAgent):
     """
+    A QCoordinator is an agent that can coordinate a set of 
+    sub-agents in such a way that the sum of their actions is optimal.
+    See #step for more details.
+    
     The QCoordinator should work with environments that have a dictionary action space of the form:
     A={
     "entityId1": Discrete(n1)
