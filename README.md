@@ -12,7 +12,9 @@ After that, you can use aiagents
 
 
 ### Build the library ###
-To build the library, go to the aiagents directory and execute 
+To build the library, 
+* follow the steps in 'prepare aiagents for use'
+* go to the aiagents directory and execute 
 ```
 ./build.sh
 ```
@@ -21,3 +23,6 @@ To build the library, go to the aiagents directory and execute
 
 # Using from Eclipse #
 If you have the aienvs project installed, you can also add a dependency to that project directly.
+
+If you want to use aiagents independently from a venv using pydev, prepare the venv as described. 
+Additionally, pip install tensorflow.
