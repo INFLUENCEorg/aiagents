@@ -57,26 +57,32 @@ class testQCoordinator(LoggedTestCase):
         component1.getEnvironment = Mock(return_value=env) 
         coordinator = QCoordinator([component1], env)
         coordinator.step()
+        
+    @staticmethod
+    def maxAt2(args, action:Dict):
+        if action.get('a') == 2:
+            return 3.14
+        return 1
 
+    def test_step_find_max(self):
+        # we don't want to test spaces but we need to get DecoratedSpace
+        # so it seems easier to make a real space anyway.
+        space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
+        env = Mock(spec=Env)
+        env.action_space = space
+        
+        component1 = Mock(spec=QAgent)
+        component1.agentId = 'a'  # the controlled entity
+        component1.getQ = Mock(side_effect=testQCoordinator.maxAt2)
+        component1.getEnvironment = Mock(return_value=env)
+
+        coordinator = QCoordinator([component1], env)
+        bestAction = coordinator.step()
+        self.assertEqual(2, bestAction['a'])
+        # we don't know B because there is no agent prefering any b value
+    
     @staticmethod
     def maxAt24(args, action:Dict):
         if action.get('ab') == 24:
             return 3.14
         return 1
-
-    def test_step_find_max(self):
-        env = Mock(spec=Env)
-        # we don't want to test spaces but we need to get DecoratedSpace
-        origenv = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
-        env.action_space = Mock(spec=PackedSpace)
-        
-        component1 = Mock(spec=QAgent)
-        component1.agentId = 'ab'
-        component1.getQ = Mock(side_effect=testQCoordinator.maxAt24)
-        component1.getEnvironment = Mock(return_value=env) 
-
-        coordinator = QCoordinator([component1], env)
-        bestAction = coordinator.step()
-        self.assertEqual(2, bestAction['a'])
-        self.assertEqual(4, bestAction['b'])
-    

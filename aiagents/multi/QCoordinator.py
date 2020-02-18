@@ -30,7 +30,9 @@ class QCoordinator(BasicComplexAgent):
         The agent environments should be equal to our environment,
         or to a Packed version of it. We can't check this because
         environments do not implement equals at this moment.
-        @param environment the openAI Gym Env. Must have actionspace of type Dict
+        @param environment the openAI Gym Env. Must have actionspace of type Dict.
+        Must be a non-packed space, so that the actions can be packed
+        properly for each QAgentComponent individually.
         @param parameters the optional init dictionary with parameters  
         """
         if not isinstance(environment.action_space, spaces.Dict):
@@ -109,7 +111,7 @@ class QCoordinator(BasicComplexAgent):
                     action1 = env.pack(action)
                 else:
                     action1 = action
-                totalQ = totalQ + agent.getQ(observation, action1[agent.agentId])
+                totalQ = totalQ + agent.getQ(observation, action1)
             if totalQ > bestTotalQ:
                 bestAction = action
                 bestTotalQ = totalQ
