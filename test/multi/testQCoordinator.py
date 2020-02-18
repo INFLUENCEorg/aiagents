@@ -59,12 +59,22 @@ class testQCoordinator(LoggedTestCase):
         coordinator.step()
         
     @staticmethod
-    def maxAt2(args, action:Dict):
+    def maxAtA2(args, action:Dict):
         if action.get('a') == 2:
             return 3.14
         return 1
 
-    def test_step_find_max(self):
+    @staticmethod
+    def maxAtB4(args, action:Dict):
+        if action.get('b') == 4:
+            return 2.2
+        return 0.3
+    
+    def test_step_find_max_one_agent(self):
+        '''
+        Test where QCoordinator has only 1 sub-agent, which prefers a=2.
+        QCoordinator thus should find an action with a=2 (b is irrelevant).
+        '''
         # we don't want to test spaces but we need to get DecoratedSpace
         # so it seems easier to make a real space anyway.
         space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
@@ -73,16 +83,72 @@ class testQCoordinator(LoggedTestCase):
         
         component1 = Mock(spec=QAgent)
         component1.agentId = 'a'  # the controlled entity
-        component1.getQ = Mock(side_effect=testQCoordinator.maxAt2)
+        component1.getQ = Mock(side_effect=testQCoordinator.maxAtA2)
         component1.getEnvironment = Mock(return_value=env)
 
         coordinator = QCoordinator([component1], env)
         bestAction = coordinator.step()
         self.assertEqual(2, bestAction['a'])
         # we don't know B because there is no agent prefering any b value
+
+    def test_step_find_max_two_agents(self):
+        '''
+        Test with QCoordinator that has two sub-agents.
+        One prefers a=2, the other prefers b=4.
+        QCoordinator should find the action with a=2, b=4.
+        '''
+        # we don't want to test spaces but we need to get DecoratedSpace
+        # so it seems easier to make a real space anyway.
+        space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
+        env = Mock(spec=Env)
+        env.action_space = space
+        
+        componentA = Mock(spec=QAgent)
+        componentA.agentId = 'a'  # the controlled entity
+        componentA.getQ = Mock(side_effect=testQCoordinator.maxAtA2)
+        componentA.getEnvironment = Mock(return_value=env)
+
+        componentB = Mock(spec=QAgent)
+        componentB.agentId = 'b'  # the controlled entity
+        componentB.getQ = Mock(side_effect=testQCoordinator.maxAtB4)
+        componentB.getEnvironment = Mock(return_value=env)
+
+        coordinator = QCoordinator([componentA, componentB], env)
+        bestAction = coordinator.step()
+        self.assertEqual(2, bestAction['a'])
+        self.assertEqual(4, bestAction['b'])
     
     @staticmethod
-    def maxAt24(args, action:Dict):
-        if action.get('ab') == 24:
-            return 3.14
-        return 1
+    def maxAtAB16(args, action:Dict):
+        if action.get('ab') == 16:
+            return 2.2
+        return 0.3
+    
+    def test_step_find_max_one_packedagent(self):
+        '''
+        Test where QCoordinator has 1 sub-agent that uses a packed space,
+        which prefers the action ab=24. 
+        '''
+        # we don't want to test spaces but we need to get DecoratedSpace
+        # so it seems easier to make a real space anyway.
+        space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
+        env = Mock(spec=Env)
+        env.action_space = space
+        
+        # we also grab this moment to demo packedspace again.
+        # for proper junit test this should be mocked.
+        packedspace = PackedSpace(space, {'ab':['a', 'b']})
+        packedenv = Mock(spec=Env)
+        packedenv.action_space = packedspace
+        
+        component1 = Mock(spec=QAgent)
+        component1.agentId = 'a'  # the controlled entity
+        component1.getQ = Mock(side_effect=testQCoordinator.maxAtAB16)
+        component1.getEnvironment = Mock(return_value=packedenv)
+
+        coordinator = QCoordinator([component1], env)
+        bestAction = coordinator.step()
+        # 16  = 3*5+1
+        self.assertEqual(1, bestAction['a'])
+        self.assertEqual(5, bestAction['b'])
+
