@@ -9,17 +9,21 @@ from gym import spaces
 import math
 import operator
 
+
 def getPath(source, destination, pathDict):
     return pathDict[tuple(source)][tuple(destination)]
 
+
 def getDistance(path):
-    return len(path)-1
+    return len(path) - 1
+
 
 def setTargetPosition(positionEvaluationDictionary, socialOrder):
     # sort the positions
-    sortedEvaluation = sorted(positionEvaluationDictionary.items(), 
+    sortedEvaluation = sorted(positionEvaluationDictionary.items(),
             key=operator.itemgetter(1), reverse=True)
     return sortedEvaluation[socialOrder][0]
+
 
 def evaluateAllPositions(state, robotpos, pathDict):
     positionEvaluation = {}
@@ -31,14 +35,15 @@ def evaluateAllPositions(state, robotpos, pathDict):
             currentEvaluation = 0
 
         path = getPath(robotpos, taskpos, pathDict)
-        distance=getDistance(path)
-        if(distance==0):
+        distance = getDistance(path)
+        if(distance == 0):
             positionEvaluation.update({taskpos: math.inf})
         else:
-            newEvaluation = currentEvaluation + 1./getDistance(path)
+            newEvaluation = currentEvaluation + 1. / getDistance(path)
             positionEvaluation.update({taskpos: newEvaluation})
 
     return positionEvaluation
+
 
 class FactoryFloorAgent(AtomicAgent):
     """
@@ -54,7 +59,7 @@ class FactoryFloorAgent(AtomicAgent):
         self._ACTIONS = dict(zip(environment.ACTIONS.values(), environment.ACTIONS.keys()))
         self._graph = FactoryGraph(environment.getMap())
         self.pathDict = dict(networkx.all_pairs_dijkstra_path(self._graph))
-        #self._mapping = { "[0 -1]":self._ACTIONS.get("UP"),
+        # self._mapping = { "[0 -1]":self._ACTIONS.get("UP"),
         #                 '[ 0 -1]':self._ACTIONS.get("UP"),
          #                "[0 1]":self._ACTIONS.get("DOWN"),
         #                 '[ 0 1]':self._ACTIONS.get("DOWN"),
@@ -63,16 +68,13 @@ class FactoryFloorAgent(AtomicAgent):
         #                 "[1 0]":self._ACTIONS.get("RIGHT"),
          #                '[1  0]':self._ACTIONS.get("RIGHT")
          #                }
-        self._mapping = { (0,-1):self._ACTIONS.get("UP"),
+        self._mapping = { (0, -1):self._ACTIONS.get("UP"),
                           (0, 1):self._ACTIONS.get("DOWN"),
                           (-1, 0):self._ACTIONS.get("LEFT"),
-                          (1,0):self._ACTIONS.get("RIGHT")
+                          (1, 0):self._ACTIONS.get("RIGHT")
                          }
 
-
     def step(self, state: FactoryFloorState, reward=None, done=None) -> spaces.Dict:
-        """
-        """
         # we can exit early
         if not state.tasks:
             return {self._agentId: self._ACTIONS.get("ACT")}
@@ -82,7 +84,7 @@ class FactoryFloorAgent(AtomicAgent):
 
         positionEvaluation = evaluateAllPositions(state, robotpos, self.pathDict)
         # more robots than tasks our robot stays put
-        if( len(positionEvaluation) <= socialOrder ):
+        if(len(positionEvaluation) <= socialOrder):
             return {self._agentId: self._ACTIONS.get("ACT")}
 
         positionToReach = setTargetPosition(positionEvaluation, socialOrder)
@@ -106,9 +108,9 @@ class FactoryFloorAgent(AtomicAgent):
 
     def _computeSocialOrder(self, state, robotpos):
         # social law based on agent ids lexicographic order
-        socialOrder=0
+        socialOrder = 0
         for robot in state.robots.values():
-            if (robot.getPosition()==robotpos).all() and (robot.getId() < self._agentId):
+            if (robot.getPosition() == robotpos).all() and (robot.getId() < self._agentId):
                 socialOrder += 1
         
         return socialOrder
