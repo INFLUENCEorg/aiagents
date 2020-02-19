@@ -22,7 +22,7 @@ To build the library,
 
 
 # Using from Eclipse #
-If you have the aienvs project installed, you can also add a dependency to that project directly.
+If you have the aienvs project installed, you can also add a dependency to that project directly. You also need to configure your eclipse interpreter as described on https://github.com/INFLUENCEorg/aienvs
 
 If you want to use aiagents independently from a venv using pydev, prepare the venv as described. 
 Additionally, pip install tensorflow.
