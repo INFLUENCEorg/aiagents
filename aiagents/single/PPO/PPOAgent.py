@@ -6,18 +6,19 @@ from aienvs.Environment import Env
 import logging
 import tensorflow as tf
 import os
+from gym.spaces import Dict
 
 
 class PPOAgent(AtomicAgent):
 
-    def __init__(self, agentId, environment:Env, parameters:dict):
-        AtomicAgent.__init__(self, agentId, environment, parameters)
+    def __init__(self, agentId, actionspace:Dict, observationspace, parameters:dict):
+        AtomicAgent.__init__(self, agentId, actionspace, observationspace, parameters)
         self._prev_state = None
         # TODO: change to self._step_output = dict({"obs": observation_space.sample(), "reward": None, "done": None, "prev_action": None})
         self._step_output = None
         self._action = [-1]
         self._parameters = parameters
-        self._num_actions = environment.action_space.spaces.get(agentId).n
+        self._num_actions = actionspace.spaces.get(agentId).n
         self._train_frequency = self._parameters['train_frequency']
         self._save_frequency = self._parameters['save_frequency']
         self._agentId = agentId
@@ -35,7 +36,7 @@ class PPOAgent(AtomicAgent):
                         "policy_loss": [],
                         "value_loss": []}
         tf.reset_default_graph()
-        self._num_actions = environment.action_space.spaces.get(agentId).n
+        self._num_actions = actionspace.spaces.get(agentId).n
         self._step = 0
         summary_path = 'summaries/' + self._parameters['name'] + '_' + \
                         self._parameters['algorithm']
@@ -92,7 +93,6 @@ class PPOAgent(AtomicAgent):
         self._action = self._action_output.get('action')[0]
         return {self._agentId: self._action}
 
-
     ############# PRIVATE METHODS ####################
 
     def _add_to_memory(self, step_output, next_step_output, get_actions_output):
@@ -123,11 +123,11 @@ class PPOAgent(AtomicAgent):
         # implementation
         if self._parameters['recurrent']:
             self._buffer['states_in'].append(
-                    np.transpose(get_actions_output['state_in'], (1,0,2)))
+                    np.transpose(get_actions_output['state_in'], (1, 0, 2)))
             self._buffer['prev_actions'].append(step_output['prev_action'])
         if self._parameters['influence']:
             self._buffer['inf_states_in'].append(
-                    np.transpose(get_actions_output['inf_state_in'], (1,0,2)))
+                    np.transpose(get_actions_output['inf_state_in'], (1, 0, 2)))
             self._buffer['inf_prev_actions'].append(step_output['prev_action'])
         if next_step_output['done']:
             self._stats['cumulative_rewards'].append(self._cumulative_rewards)
@@ -199,10 +199,10 @@ class PPOAgent(AtomicAgent):
                               dtype=np.float32)
         for t in reversed(range(self._parameters['time_horizon'])):
             mask = 1.0 - dones[t]
-            last_value = last_value*mask
-            last_advantage = last_advantage*mask
-            delta = rewards[t] + gamma*last_value - values[t]
-            last_advantage = delta + gamma*lambd*last_advantage
+            last_value = last_value * mask
+            last_advantage = last_advantage * mask
+            delta = rewards[t] + gamma * last_value - values[t]
+            last_advantage = delta + gamma * lambd * last_advantage
             advantages[t] = last_advantage
             last_value = values[t]
         return advantages

@@ -1,10 +1,11 @@
 from aiagents.multi.ComplexAgent import ComplexAgent
 from .BasicComplexAgent import BasicComplexAgent
 from aiagents.QAgentComponent import QAgentComponent
-from gym import spaces
 from aienvs.gym.DecoratedSpace import DecoratedSpace
 from aienvs.Environment import Env
 from aienvs.gym.ModifiedActionSpace import ModifiedActionSpace
+from gym.spaces import Dict
+from typing import List
 
 
 class QCoordinator(BasicComplexAgent):
@@ -24,7 +25,7 @@ class QCoordinator(BasicComplexAgent):
     
     """
 
-    def __init__(self, agentComponentList:list, environment:Env, parameters:dict=None):
+    def __init__(self, agentComponentList:List[QAgentComponent], actionspace:Dict=None, observationspace=None, parameters:dict=None):
         """
         @param AgentComponentList: a list of QAgentComponent. Size must be >=1.
         The agent environments should be equal to our environment,
@@ -35,8 +36,8 @@ class QCoordinator(BasicComplexAgent):
         properly for each QAgentComponent individually.
         @param parameters the optional init dictionary with parameters  
         """
-        if not isinstance(environment.action_space, spaces.Dict):
-            raise ValueError("Environment must have a Dict actionspace but found " + str(environment.action_space))
+        if not isinstance(actionspace, Dict):
+            raise ValueError("actionspace must be Dict but found " + str(actionspace))
 
         if len(agentComponentList) == 0:
             raise ValueError("There must be at least 1 agent in the list")
@@ -45,13 +46,13 @@ class QCoordinator(BasicComplexAgent):
             if not isinstance(agent, QAgentComponent):
                 raise ValueError("All agent components for QCoordinator must be QAgentComponent but found " + agent)
 
-        super(QCoordinator, self).__init__(agentComponentList, environment, parameters)
-        self.actionspace = DecoratedSpace.create(environment.action_space)
+        super(QCoordinator, self).__init__(agentComponentList, actionspace, observationspace, parameters)
+        self.actionspace = DecoratedSpace.create(actionspace)
         if self.actionspace.getSize() == 0:
             # error because we then can't find the best action
             raise ValueError("There are no actions in the space")
     
-    def step(self, observation=None, reward:float=None, done:bool=None) -> spaces.Dict:
+    def step(self, observation=None, reward:float=None, done:bool=None) -> Dict:
         """
         Let's say QCoordinator has 3 QAgentComponent's, 
         lets denote them subQ1, subQ2, subQ3.
@@ -105,7 +106,7 @@ class QCoordinator(BasicComplexAgent):
             action = self.actionspace.getById(n)
             totalQ = 0
             for agent in self._agentSubcomponents:
-                env = agent.getEnvironment().action_space
+                env = agent.getActionSpace()
                 # HACK #7, pack action if agents are using packed space
                 if isinstance(env, ModifiedActionSpace):
                     action1 = env.pack(action)

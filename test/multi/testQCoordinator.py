@@ -14,48 +14,47 @@ from aienvs.gym.PackedSpace import PackedSpace
 class testQCoordinator(LoggedTestCase):
 
     def test_initSmoke(self):
-        env = Mock(spec=Env)
+        # env = Mock(spec=Env)
         # we don't want to test spaces but we need to get DecoratedSpace
-        env.action_space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
+        action_space = Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
 
         component1 = Mock(spec=QAgent)
-        QCoordinator([component1], env)
+        QCoordinator([component1], action_space, None, {})
 
     def test_initNoEnv(self):
         component1 = Mock(spec=QAgent)
         with self.assertRaises(Exception) as context:
             QCoordinator([component1], None)
-        self.assertEquals("'NoneType' object has no attribute 'action_space'" , str(context.exception))
+        self.assertEquals("actionspace must be Dict but found None" , str(context.exception))
 
     def test_initNoDictEnv(self):
-        env = Mock(spec=Env)
         # we don't want to test spaces but we need to get DecoratedSpace
-        env.action_space = spaces.Discrete(3)
+        space = spaces.Discrete(3)
         component1 = Mock(spec=QAgent)
         with self.assertRaises(Exception) as context:
-            QCoordinator([component1], env)
-        self.assertEquals("Environment must have a Dict actionspace but found Discrete(3)" , str(context.exception))
+            QCoordinator([component1], space, None)
+        self.assertEquals("actionspace must be Dict but found Discrete(3)" , str(context.exception))
 
     def test_initEmptyDict(self):
-        env = Mock(spec=Env)
         # we don't want to test spaces but we need to get DecoratedSpace
-        env.action_space = spaces.Dict({})
+        space = spaces.Dict({})
 
         component1 = Mock(spec=QAgent)
         with self.assertRaises(Exception) as context:
-            QCoordinator([component1], env)
+            QCoordinator([component1], space, None)
         self.assertEquals("There are no actions in the space" , str(context.exception))
 
     def test_step_smoke(self):
         env = Mock(spec=Env)
         # we don't want to test spaces but we need to get DecoratedSpace
-        env.action_space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
+        space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
+        env.action_space = space
 
         component1 = Mock(spec=QAgent)
         component1.agentId = 'a'
         component1.getQ = Mock(return_value=3.14)
         component1.getEnvironment = Mock(return_value=env) 
-        coordinator = QCoordinator([component1], env)
+        coordinator = QCoordinator([component1], space, None)
         coordinator.step()
         
     @staticmethod
@@ -86,7 +85,7 @@ class testQCoordinator(LoggedTestCase):
         component1.getQ = Mock(side_effect=testQCoordinator.maxAtA2)
         component1.getEnvironment = Mock(return_value=env)
 
-        coordinator = QCoordinator([component1], env)
+        coordinator = QCoordinator([component1], space, None)
         bestAction = coordinator.step()
         self.assertEqual(2, bestAction['a'])
         # we don't know B because there is no agent prefering any b value
@@ -113,7 +112,7 @@ class testQCoordinator(LoggedTestCase):
         componentB.getQ = Mock(side_effect=testQCoordinator.maxAtB4)
         componentB.getEnvironment = Mock(return_value=env)
 
-        coordinator = QCoordinator([componentA, componentB], env)
+        coordinator = QCoordinator([componentA, componentB], space, None)
         bestAction = coordinator.step()
         self.assertEqual(2, bestAction['a'])
         self.assertEqual(4, bestAction['b'])
@@ -132,8 +131,8 @@ class testQCoordinator(LoggedTestCase):
         # we don't want to test spaces but we need to get DecoratedSpace
         # so it seems easier to make a real space anyway.
         space = spaces.Dict({'a':spaces.Discrete(3), 'b':spaces.Discrete(7)})
-        env = Mock(spec=Env)
-        env.action_space = space
+        # env = Mock(spec=Env)
+        # env.action_space = space
         
         # we also grab this moment to demo packedspace again.
         # for proper junit test this should be mocked.
@@ -144,9 +143,9 @@ class testQCoordinator(LoggedTestCase):
         component1 = Mock(spec=QAgent)
         component1.agentId = 'a'  # the controlled entity
         component1.getQ = Mock(side_effect=testQCoordinator.maxAtAB16)
-        component1.getEnvironment = Mock(return_value=packedenv)
+        component1.getActionSpace = Mock(return_value=packedspace)
 
-        coordinator = QCoordinator([component1], env)
+        coordinator = QCoordinator([component1], space, None)
         bestAction = coordinator.step()
         # 16  = 3*5+1
         self.assertEqual(1, bestAction['a'])

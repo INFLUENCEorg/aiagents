@@ -37,7 +37,7 @@ class testAgentFactory(LoggedTestCase):
         actspace.spaces = spacesmock
         env.action_space = actspace
 
-        agent = createAgent(env, {'id': 'entity1',
+        agent = createAgent(actspace, None, {'id': 'entity1',
                                   'class':'aiagents.single.RandomAgent.RandomAgent',
                                   'parameters':{}})
 
@@ -51,7 +51,7 @@ class testAgentFactory(LoggedTestCase):
         env.action_space = actspace
         state = Mock()
         
-        agent = createAgent(env, {'id': 'entity1',
+        agent = createAgent(actspace , None, {'id': 'entity1',
                                   'class':'aiagents.single.RandomAgent.RandomAgent',
                                   'parameters':{}})
         action = agent.step(state)

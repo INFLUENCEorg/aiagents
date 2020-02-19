@@ -53,9 +53,9 @@ class testQAgentGroupingRobot(LoggedTestCase):
         packedActionSpace = PackedSpace(basicEnv.action_space, {"e1":[ENTITY1], "e23": [ENTITY2, ENTITY3]})
         env = ModifiedGymEnv(basicEnv, packedActionSpace)
     
-        agent1 = RandomAgent("e1", env)
+        agent1 = RandomAgent("e1", env.action_space, env.observation_space)
         agent2 = QAgent("e23", env, {'alpha':0.4, 'gamma':1, 'm':-500000, 's':1})
-        complexAgent = BasicComplexAgent([agent1, agent2])
+        complexAgent = BasicComplexAgent([agent1, agent2], basicEnv.action_space, basicEnv.observation_space)
         
         episode = Episode(complexAgent, env, None, True, 0)
         episode.addListener(JsonLogger(logoutput))

@@ -1,5 +1,7 @@
 from aiagents.AgentComponent import AgentComponent
 from aienvs.Environment import Env
+from gym.spaces import Dict
+from typing import List
 
 
 class ComplexAgent(AgentComponent):
@@ -9,13 +11,17 @@ class ComplexAgent(AgentComponent):
     This is abstract because step is not implemented at this point.
     """
 
-    def __init__(self, agentComponentList:list, environment:Env=None, parameters=None):
+    def __init__(self, agentComponentList:List[AgentComponent], actionspace:Dict, observationspace, parameters=None):
         """
         @param agentComponentList list of AgentComponent's children of this 
-        @param environment the environment that this component and children work in
+        @param actionspace the gym action_space, must be Dict as required by our Envs.
+        Usually, this is an unpacked space, allowing the complex agent to 
+        generate un-packed actions and then pack them properly for each AgentComponent
+        @param observationspace the gym observation_space. 
         @param parameters the additional setup parameters, used for
         this only (not for the children). 
         """
         self._agentSubcomponents = agentComponentList
-        self._environment = environment
+        self._actionspace = actionspace
+        self._observationspace = observationspace
 
