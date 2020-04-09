@@ -6,6 +6,7 @@ from math import exp
 import random
 from aiagents.utils.Hashed import Hashed
 from aienvs.gym.DecoratedSpace import DecoratedSpace
+from gym.spaces import Dict
 
 INITIAL_Q = 0
 
@@ -30,12 +31,15 @@ class QAgent(AtomicAgent, QAgentComponent):
     chooseAction implements a standard epsilon-greedy
     """
 
-    def __init__(self, switchId:str, environment:Env,
-            parameters:dict={'alpha':0.1, 'gamma':1, 'epsilon': 0.1}):
-        super().__init__(switchId, environment, parameters)
+    def __init__(
+        self, 
+        switchId:str, 
+        actionspace:Dict=None, 
+        observationspace=None, 
+        parameters:dict={'alpha':0.1, 'gamma':1, 'epsilon': 0.1}
+    ):
+        super().__init__(switchId, actionspace, observationspace, parameters)
         # determine our action space, subset of env action_space
-        full_action_space = DecoratedSpace.create(environment.action_space)
-        self.action_space = full_action_space.get(switchId)
         self._lastAction = None
         self._lastState = None
         self._alpha = parameters['alpha']
@@ -43,7 +47,8 @@ class QAgent(AtomicAgent, QAgentComponent):
         self._epsilon = parameters['epsilon']
         self._Q = {}  # Q[state][action]=Q value after _lastAction
         self._steps = 0
-        self._eval = False
+        self._eval = False # in eval mode, the agent executes the greedy policy given by the q function
+        self._actionspace = DecoratedSpace.create(actionspace)
     
     def eval(self):
         self._eval = True
@@ -55,11 +60,16 @@ class QAgent(AtomicAgent, QAgentComponent):
     def step(self, observation=None, reward:float=None, done:bool=None) -> dict:
         # observation is the current state
         newstate = Hashed(observation)
-        if self._lastAction != None and self._eval == False:
+        # do not update q values in the first step or in evaluation mode
+        if self._lastState != None and self._lastAction != None and self._eval == False:
             self._updateQ(self._lastState, self._lastAction, newstate, reward, done)
 
-        action = self._chooseAction(newstate)
-        self._lastState = newstate
+        action = None
+        if done is True:
+            self._lastState = None
+        else:
+            action = self._chooseAction(newstate)
+            self._lastState = newstate
         self._lastAction = action
         self._steps = self._steps + 1
         return {self.agentId: action}
@@ -100,11 +110,14 @@ class QAgent(AtomicAgent, QAgentComponent):
         """
         Qsa = self._getQ(oldstate, action)
         Qs1a = 0
-        if done is False:
+        # if the next state is the terminal state, then the max q value of the next state is 0
+        if done is False: 
             Qs1a = self._getMaxQ(newstate)
         Qnew = (1 - self._alpha) * Qsa + self._alpha * (reward + self._gamma * Qs1a)
         if not oldstate in self._Q.keys():
             self._Q[oldstate] = {}
+            for a in range(self._actionspace.getSize()):
+                self._Q[oldstate][a] = INITIAL_Q
         self._Q[oldstate][action] = Qnew
 
     def _getMaxQ(self, state:Hashed):
@@ -115,7 +128,8 @@ class QAgent(AtomicAgent, QAgentComponent):
         """
         if not state in self._Q.keys():
             return INITIAL_Q
-        return max(self._Q[state].values())
+        maxQ = max(self._Q[state].values())
+        return maxQ
 
     def _getMaxAction(self, state:Hashed) -> int:
         """
@@ -127,6 +141,7 @@ class QAgent(AtomicAgent, QAgentComponent):
             return None
 
         Qs = self._Q[state]
+
         maxQ = float('-inf')
         maxAction = None
 
@@ -151,7 +166,7 @@ class QAgent(AtomicAgent, QAgentComponent):
 
         if bestact == None:
             # sample: Dict -> OrderedDict
-            # bestact = something like self.action_space.sample()
-            bestact = random.randint(0, self.action_space.getSize() - 1)
+            # bestact = something like self._actionspace.sample()
+            bestact = random.randint(0, self._actionspace.getSize() - 1)
 
         return bestact
