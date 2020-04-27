@@ -2,34 +2,22 @@ import numpy as np
 import random
 import os
 
-"""
-Jinke Notes:
-* I think replay memory is working properly
-"""
-
 class ReplayMemory(object):
     """
     Database to store transitions in.
     """
-    def __init__(self, memory_size, height, width, frames, batch_size, separate=False):
+    def __init__(self, memory_size, height, width, frames, batch_size):
         """
         Initialize the memory with the right size.
-        Jinke Notes:
-        * transtions are saved in the form of (states, actions, next_states, rewards, terminal_states)
-        * each of which is an numpy array
-        * note that for DQN, we don't empty the replay memory after one step of value function update
         """
         self.memory_size = memory_size
         self.batch_size = batch_size
 
         self.states = np.zeros((memory_size, height, width, frames),dtype="float32")
         self.actions = np.zeros((memory_size,), dtype="int32")
-        if separate:
-            self.rewards = np.zeros((memory_size, height),dtype="float32")
-        else:
-            self.rewards = np.zeros((memory_size, ),dtype="float32")
         self.next_states = np.zeros((memory_size, height, width, frames),dtype="float32")
         self.terminal_states = np.zeros((memory_size,), dtype="int32")
+        self.rewards = np.zeros((memory_size, ), dtype="float32")
 
         self.pointer = 0
         self.items = 0
@@ -37,10 +25,6 @@ class ReplayMemory(object):
     def append(self, state, action, reward, next_state, terminal):
         """
         Add the given information to the Replay Memory.
-
-        Jinke Notes:
-        * the removal of old data is done in a sequential way
-        * the main idea is to use a pointer which points to the place in the array where new transition will be located
         """
         self.states[self.pointer] = state
         self.actions[self.pointer] = action
@@ -61,19 +45,13 @@ class ReplayMemory(object):
         """
         raise NotImplementedError
 
-    def get_latest_entry(self):
-        """
-        Retrieve the entry that has been added last. This can differ
-        between sequence en non-sequence samplers.
-        """
-        raise NotImplementedError
-
     def full(self):
         """
         Check whether the replay memory has been filled.
         """
         return self.items >= self.memory_size
 
+    @property
     def fullness(self):
         """
         Return the percentage the replay memory has been filled.
@@ -103,7 +81,6 @@ class ReplayMemory(object):
         self.actions = npzfile['actions']
         self.rewards = npzfile['rewards']
         self.terminal_states = npzfile['terminals']
-
         self.items = self.memory_size
 
 class RandomSampling(ReplayMemory):
@@ -131,14 +108,3 @@ class RandomSampling(ReplayMemory):
         selected_next_states = self.next_states[indices[:self.batch_size]]
 
         return selected_states, selected_actions, selected_rewards, selected_next_states
-
-    def get_latest_entry(self):
-        """
-        Retrieve the last added entry from the replay memory.
-        """
-        selected_states = self.states[self.pointer-1]
-        selected_actions = self.actions[self.pointer-1]
-        selected_rewards = self.rewards[self.pointer-1]
-        selected_next_states = self.next_states[self.pointer-1]
-
-        return [selected_states], [selected_actions], [selected_rewards], [selected_next_states]

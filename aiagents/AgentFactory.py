@@ -3,12 +3,14 @@ from aiagents.AgentComponent import AgentComponent
 import logging
 import glob
 import os
+from gym.spaces import Dict
 
 
-def createAgent(environment:Env, parameters:dict) -> AgentComponent:
+def createAgent(actionspace:Dict, observationspace, parameters:dict) -> AgentComponent:
     '''
     Create an agent from a given full path name
-    @param environment see AgentComponent __init__
+    @param actionspace see AtomicAgent __init__
+    @param observationspace see AtomicAgent __init__
     @param parameters this parameter is a dictionary. It must contain these keys
     * 'class': the class name (str) of the agent to be loaded.The class will be resolved by resolve from the aiagents directory.
     * 'parameters': the subparameters (dict) to be passed into the agent.
@@ -43,15 +45,15 @@ def createAgent(environment:Env, parameters:dict) -> AgentComponent:
         raise ValueError("Can't load " + str(classname) + " from " + str(parameters)) from error
     if 'id' in parameters:
         try:
-            obj = klass(parameters['id'], environment, class_parameters)
+            obj = klass(parameters['id'], actionspace, observationspace, class_parameters)
         except Exception as error:
             raise ValueError(classname + " failed on __init__:") from error
     elif 'subAgentList' in parameters:
         subAgentList = []
         for subAgentParameters in parameters['subAgentList']:
-            subAgentList.append(createAgent(environment, subAgentParameters))
+            subAgentList.append(createAgent(actionspace, observationspace, subAgentParameters))
             try:
-                obj = klass(subAgentList, environment, class_parameters)
+                obj = klass(subAgentList, actionspace, observationspace, class_parameters)
             except Exception as error:
                 raise ValueError(classname + " failed on __init__:") from error
     else:

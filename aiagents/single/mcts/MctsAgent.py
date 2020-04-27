@@ -12,6 +12,8 @@ from aiagents.single.AtomicAgent import AtomicAgent
 from aiagents.AgentFactory import createAgent
 from dict_recursive_update import recursive_update
 from aienvs.FactoryFloor.DiyFactoryFloorAdapter import DiyFactoryFloorAdapter
+from gym.spaces import Dict
+import aienvs.EnvironmentFactory as EnvironmentFactory
 
 
 class MctsAgent(AtomicAgent):
@@ -20,13 +22,17 @@ class MctsAgent(AtomicAgent):
         'samplingLimit': 20,
         'maxSteps': 0}}
 
-    def __init__(self, agentId, environment: Env, parameters: dict): 
+    def __init__(self, agentId, actionspace: Dict, observationspace, parameters: dict): 
         """
         @param parameters dict that must contain keys 'otherAgents', 'treeAgent' and 'rolloutAgent'
         'otherAgents' must map to a (possibly empty) list of dict objects for a call to createAgents
-        'treeAgent' and 'rolloutAgent' must map to a dict object for a call to createAgent
+        'treeAgent' and 'rolloutAgent' must map to a dict object for a call to createAgent.
+        The dict must also contain a 'simulator' key containing a copy of the env parameters,
+        so that the agent can create a duplicate environment. The simulator dict must contain
+        a key 'fullname' containing the full name of the environment
+        for the class loader (se EnvironmentsFactory).
         """
-        super().__init__(agentId, environment, parameters)
+        super().__init__(agentId, actionspace, observationspace, parameters)
         if not ('treeAgent' in parameters and 'rolloutAgent' in parameters):
             raise "parameters does not contain 'treeAgent', 'rolloutAgent':" + str(parameters)
         self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
@@ -46,25 +52,28 @@ class MctsAgent(AtomicAgent):
                 raise ValueError("Iteration limit must be greater than one")
             self._limitType = 'iterations'
         
-        self._simulator = ModifiedGymEnv(copy.deepcopy(environment), DecoratedSpace.create(copy.deepcopy(environment.action_space)))
+        # start the simulator environment
+        envparams = parameters['simulator']
+        e = EnvironmentFactory.createEnvironment(envparams['fullname'], envparams)
+        self._simulator = ModifiedGymEnv(e, DecoratedSpace.create(copy.deepcopy(e.action_space)))
 
         # diyBonus logic: to refactor -- include in a simulator factory / only for FactoryFloor env
-        diyBonus =  self._parameters.get("diyBonus")
+        diyBonus = self._parameters.get("diyBonus")
         if diyBonus is not None:
             self._simulator = DiyFactoryFloorAdapter(self._simulator, diyBonus, self.agentId)
 
-        self._treeAgent = createAgent(self._simulator, parameters['treeAgent'])
+        self._treeAgent = createAgent(self._simulator.action_space, self._simulator.observation_space, parameters['treeAgent'])
 
         if 'otherAgents' in parameters:
             rolloutAgentDict = copy.deepcopy(parameters['otherAgents'])
             rolloutAgentList = rolloutAgentDict['subAgentList']
             rolloutAgentList.append(parameters['rolloutAgent'])
-            rolloutAgentDict['subAgentList']=rolloutAgentList
-            self._rolloutAgent=createAgent(self._simulator, rolloutAgentDict)
+            rolloutAgentDict['subAgentList'] = rolloutAgentList
+            self._rolloutAgent = createAgent(self._simulator, rolloutAgentDict)
             self._otherAgents = createAgent(self._simulator, parameters['otherAgents'])
         else:
             self._otherAgents = None
-            self._rolloutAgent = createAgent(self._simulator, parameters['rolloutAgent'])
+            self._rolloutAgent = createAgent(self._simulator.action_space, self._simulator.observation_space, parameters['rolloutAgent'])
 
     def step(self, observation, reward, done):
         if done:

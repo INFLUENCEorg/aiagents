@@ -36,7 +36,7 @@ class testQAgentGroupingRobot(LoggedTestCase):
     """
 
     def test_Run(self):
-    
+
         params = {'steps':10,
                     'robots':[ {'id': ENTITY1, 'pos':'random'},
                               {'id': ENTITY2, 'pos': 'random'},
@@ -47,19 +47,19 @@ class testQAgentGroupingRobot(LoggedTestCase):
                            '....',
                            '....']
                     }
-        
+
         basicEnv = GroupingRobots(params)
         logoutput = io.StringIO("episode output log")
         packedActionSpace = PackedSpace(basicEnv.action_space, {"e1":[ENTITY1], "e23": [ENTITY2, ENTITY3]})
         env = ModifiedGymEnv(basicEnv, packedActionSpace)
-    
-        agent1 = RandomAgent("e1", env)
-        agent2 = QAgent("e23", env, {'alpha':0.4, 'gamma':1, 'm':-500000, 's':1})
-        complexAgent = BasicComplexAgent([agent1, agent2])
-        
+
+        agent1 = RandomAgent("e1", env.action_space, env.observation_space)
+        agent2 = QAgent("e23", env, {'alpha':0.4, 'gamma':1, 'epsilon':0.1})
+        complexAgent = BasicComplexAgent([agent1, agent2], basicEnv.action_space, basicEnv.observation_space)
+
         episode = Episode(complexAgent, env, None, True, 0)
         episode.addListener(JsonLogger(logoutput))
         episode.run()
-    
+
         print("json output:", logoutput.getvalue())  # logs from all episodes within the experiment
-        
+

@@ -6,6 +6,7 @@ from math import exp
 import random
 from aiagents.utils.Hashed import Hashed
 from aienvs.gym.DecoratedSpace import DecoratedSpace
+from gym.spaces import Dict
 
 INITIAL_Q = 0
 
@@ -27,37 +28,48 @@ class QAgent(AtomicAgent, QAgentComponent):
        and thus determines how quick future effects boil down
        to the current Q.
 
-    see also chooseAction which has  2 parameters
-    * m: the midpoint of the sigmoid. This determines where the
-        behavour switches from A to B.
-    * s: the steepness of the cross-over from A to B behaviour. values closer
-        to 1 give a slower change from A to B.
+    chooseAction implements a standard epsilon-greedy
     """
 
-    def __init__(self, switchId:str, environment:Env,
-                 parameters:dict={'alpha':0.1, 'gamma':1, 'm':500, 's':0.01}):
-        super().__init__(switchId, environment, parameters)
+    def __init__(
+        self, 
+        switchId:str, 
+        actionspace:Dict=None, 
+        observationspace=None, 
+        parameters:dict={'alpha':0.1, 'gamma':1, 'epsilon': 0.1}
+    ):
+        super().__init__(switchId, actionspace, observationspace, parameters)
         # determine our action space, subset of env action_space
-        full_action_space = DecoratedSpace.create(environment.action_space)
-        self.action_space = full_action_space.get(switchId)
         self._lastAction = None
         self._lastState = None
         self._alpha = parameters['alpha']
         self._gamma = parameters['gamma']
-        self._m = parameters['m']
-        self._s = parameters['s']
+        self._epsilon = parameters['epsilon']
         self._Q = {}  # Q[state][action]=Q value after _lastAction
         self._steps = 0
+        self._eval = False # in eval mode, the agent executes the greedy policy given by the q function
+        self._actionspace = DecoratedSpace.create(actionspace)
+    
+    def eval(self):
+        self._eval = True
+
+    def train(self):
+        self._eval = False
 
     # Override
     def step(self, observation=None, reward:float=None, done:bool=None) -> dict:
         # observation is the current state
         newstate = Hashed(observation)
-        if self._lastAction != None:
-            self._updateQ(self._lastState, self._lastAction, newstate, reward)
+        # do not update q values in the first step or in evaluation mode
+        if self._lastState != None and self._lastAction != None and self._eval == False:
+            self._updateQ(self._lastState, self._lastAction, newstate, reward, done)
 
-        action = self._chooseAction(newstate)
-        self._lastState = newstate
+        action = None
+        if done is True:
+            self._lastState = None
+        else:
+            action = self._chooseAction(newstate)
+            self._lastState = newstate
         self._lastAction = action
         self._steps = self._steps + 1
         return {self.agentId: action}
@@ -65,7 +77,7 @@ class QAgent(AtomicAgent, QAgentComponent):
     # Override
     def getQ(self, state, action) -> float:
         return self._getQ(Hashed(state), action)
-    
+
     # Override
     def getV(self, state):
         return None  # what should this do anyway?
@@ -82,8 +94,8 @@ class QAgent(AtomicAgent, QAgentComponent):
             if action in self._Q[state].keys():
                 return self._Q[state][action]
         return INITIAL_Q
-    
-    def _updateQ(self, oldstate:Hashed, action:int, newstate:Hashed, reward:float):
+
+    def _updateQ(self, oldstate:Hashed, action:int, newstate:Hashed, reward:float, done:bool):
         """
         Updates our Q[state][act]->float dict
         according to the wiki formula.
@@ -97,22 +109,28 @@ class QAgent(AtomicAgent, QAgentComponent):
         new state with action.
         """
         Qsa = self._getQ(oldstate, action)
-        Qs1a = self._getMaxQ(newstate)
+        Qs1a = 0
+        # if the next state is the terminal state, then the max q value of the next state is 0
+        if done is False: 
+            Qs1a = self._getMaxQ(newstate)
         Qnew = (1 - self._alpha) * Qsa + self._alpha * (reward + self._gamma * Qs1a)
         if not oldstate in self._Q.keys():
             self._Q[oldstate] = {}
+            for a in range(self._actionspace.getSize()):
+                self._Q[oldstate][a] = INITIAL_Q
         self._Q[oldstate][action] = Qnew
-            
+
     def _getMaxQ(self, state:Hashed):
         """
         @param the state, Hashed
-        @return maximum possible Q(state, action) for any action, or INITIAL_Q 
+        @return maximum possible Q(state, action) for any action, or INITIAL_Q
         if state does not have any Q value.
         """
         if not state in self._Q.keys():
             return INITIAL_Q
-        return max(self._Q[state].values())
-        
+        maxQ = max(self._Q[state].values())
+        return maxQ
+
     def _getMaxAction(self, state:Hashed) -> int:
         """
         @param the state, Hashed
@@ -123,6 +141,7 @@ class QAgent(AtomicAgent, QAgentComponent):
             return None
 
         Qs = self._Q[state]
+
         maxQ = float('-inf')
         maxAction = None
 
@@ -131,7 +150,7 @@ class QAgent(AtomicAgent, QAgentComponent):
                 maxQ = Qs[act]
                 maxAction = act
         return maxAction
-        
+
     def _chooseAction(self, state:Hashed) -> int:
         """
         @param state the Hashed state
@@ -139,38 +158,15 @@ class QAgent(AtomicAgent, QAgentComponent):
         (A) an arbitrary action
         (B) the best action, that one which currently has highest Q
 
-        The choice between A and B is made by the function p(N) (see below).
-        p(N) is the chance that B is chosen (so 1-p is the chance for A)
-        It has two parameters:
-        * m: This determines where the behavour switches from A to B or vice versa.
-        * s: how quick the behaviour changes.
-        If positive, behaviour changes gradually from B to A.
-        If negative, behaviour changes gradually from A to B.
-        the bigger the absolute value, the faster the change.
-        Usually the value is close to 0 to make slow changes.
-        If 0, behaviour is constant everywhere, determined only by m
-
-        If strategy B was picked but Q is empty, we revert to strategy A.
-        @return our next action, int (the index in the action_space which is a decoratedspace) 
+        @return our next action, int (the index in the action_space which is a decoratedspace)
         """
         bestact = None
-        if random.uniform(0, 1) <= self._p():
+        if self._eval == True or random.uniform(0, 1) >= self._epsilon:
             bestact = self._getMaxAction(state)
 
         if bestact == None:
             # sample: Dict -> OrderedDict
-            # bestact = something like self.action_space.sample()
-            bestact = random.randint(0, self.action_space.getSize() - 1)
+            # bestact = something like self._actionspace.sample()
+            bestact = random.randint(0, self._actionspace.getSize() - 1)
 
         return bestact
-
-    def _p(self):
-        """
-        p(N) = 1/(1+exp(s(m - N)) a adjustable sigmoid function
-
-        p(N) has two parameters:
-        * m: the midpoint of the sigmoid.
-        * s: the steepness of the cross-over from A to B behaviour.
-        N is the number of steps taken so far.
-        """
-        return 1 / (1 + exp(self._s * (self._m - self._steps)))

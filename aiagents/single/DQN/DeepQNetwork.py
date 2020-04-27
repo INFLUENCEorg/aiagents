@@ -1,5 +1,5 @@
 import tensorflow as tf
-from .q_function import Q_function
+from .QFunction import Q_function
 
 class DeepQNetwork(Q_function):
     """
@@ -14,6 +14,7 @@ class DeepQNetwork(Q_function):
         """
         Create Tensorflow variables
         """
+        self.encoder_type = parameters['encoder_type']
         with self.graph.as_default():
             with tf.variable_scope('input'):
                 # These variables represent the variables that go into the network(s)
@@ -53,6 +54,8 @@ class DeepQNetwork(Q_function):
             self.sess.run(tf.global_variables_initializer())
         print("Finished building network.")
 
+        self.update_counter = 0
+
     def get_q_values(self, state):
         """
         Compute the Q-values for the given state.
@@ -82,19 +85,10 @@ class DeepQNetwork(Q_function):
         if self.freeze_interval > 0 and self.update_counter % self.freeze_interval == 0:
             self.sess.run(self.sync_networks)
             print("Set target network to action network.")
-        if self.update_counter % self.lra == 0 and self.update_counter > 0:
-            self.lr = self.lr * self.ar
-            print("Annealed learning rate on step {} to {}".format(self.update_counter, self.lr))
 
         var_dict = {self.states: states, self.next_states: next_states, self.actions: actions,
                     self.rewards: rewards, self.learning_rate: self.lr, self.batch_size: self.b_s}
 
-        # if self.update_counter % self.summary_frequency == 0:
-        #     summary, _ = self.sess.run([self.summaries, self.opt_operation], feed_dict=var_dict)
-        #     self.train_writer.add_summary(summary, self.update_counter)
-        # else:
-
-        # no summary at the moment
         self.sess.run(self.opt_operation, feed_dict=var_dict)
         self.update_counter += 1
 
@@ -117,6 +111,49 @@ class DeepQNetwork(Q_function):
                                                  self.actions: actions, self.rewards: rewards, self.batch_size: 1})
         return diff
 
+    def get_encoder(self, x, var, encoder_type="large"):
+        h = x
+        last_depth = self.num_frames
+        if encoder_type == "large":
+            with tf.variable_scope('conv1'):
+                var['conv1_w'] = tf.get_variable('filter', (8, 8, last_depth, 32), initializer=self.init_func)
+                var['conv1_b'] = tf.get_variable('biases', (32,), initializer=tf.constant_initializer(0.1))
+                # Do the calculations of this layer
+                h = tf.nn.conv2d(x, var['conv1_w'], strides=[1, 4, 4, 1], padding='VALID')
+                h = tf.nn.bias_add(h, var['conv1_b'])
+                h = tf.nn.relu(h, name='activation')
+            last_depth = 32
+        if encoder_type in ["medium", "large"]:
+            with tf.variable_scope('conv2'):
+                var['conv2_w'] = tf.get_variable('filter', (4, 4, last_depth, 64), initializer=self.init_func)
+                var['conv2_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
+                # Do the calculations of this layer
+                h = tf.nn.conv2d(h, var['conv2_w'], strides=[1, 2, 2, 1], padding='VALID')
+                h = tf.nn.bias_add(h, var['conv2_b'])
+                h = tf.nn.relu(h, name='activation')
+            last_depth = 64
+        if encoder_type in ["medium", "large", "small"]:
+            with tf.variable_scope('conv3'):
+                var['conv3_w'] = tf.get_variable('filter', (3, 3, last_depth, 64), initializer=self.init_func)
+                var['conv3_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
+                # Do the calculations of this layer
+                h = tf.nn.conv2d(h, var['conv3_w'], strides=[1, 1, 1, 1], padding='VALID')
+                h = tf.nn.bias_add(h, var['conv3_b'])
+                h = tf.nn.relu(h, name='activation')
+        if encoder_type in ["medium", "large", "small", "fc"]:
+            with tf.variable_scope('flatten'):
+                # Reshape the output of the conv layers to be flat
+                n_input = h.get_shape().as_list()[1] * h.get_shape().as_list()[2] * h.get_shape().as_list()[3]
+                h = tf.reshape(h, [-1, n_input])
+            with tf.variable_scope('lin1'):
+                var['lin1_w'] = tf.get_variable('weights', (n_input, 512), initializer=self.init_func)
+                var['lin1_b'] = tf.get_variable('biases', (512,), initializer=tf.constant_initializer(0.1))
+                h = tf.matmul(h, var['lin1_w']) + var['lin1_b']
+                h = tf.nn.relu(h, name="activation")
+        else:
+            raise Exception("Encoder type {} is not supported.".format(type))
+        return h
+
     def inference(self, x, name, doube_dqn=False):
         """
         This is the forward pass through the network given an input state.
@@ -129,51 +166,12 @@ class DeepQNetwork(Q_function):
         """
         # We store all variables in this dictionary
         var = {}
-        # We don't want to include the regularization losses of the target network
-        if name == 'action':
-            reg = tf.contrib.layers.l2_regularizer(self.weight_decay)
-        else:
-            reg = None
 
         with self.graph.as_default():
             with tf.variable_scope(name, reuse=doube_dqn):
-                with tf.variable_scope('conv1'):
-                    var['conv1_w'] = tf.get_variable('filter', (8, 8, self.num_frames, 32), initializer=self.init_func,
-                                                     regularizer=reg)
-                    var['conv1_b'] = tf.get_variable('biases', (32,), initializer=tf.constant_initializer(0.1))
-                    # Do the calculations of this layer
-                    h = tf.nn.conv2d(x, var['conv1_w'], strides=[1, 4, 4, 1], padding='VALID')
-                    h = tf.nn.bias_add(h, var['conv1_b'])
-                    h = tf.nn.relu(h, name='activation')
-                with tf.variable_scope('conv2'):
-                    var['conv2_w'] = tf.get_variable('filter', (4, 4, 32, 64), initializer=self.init_func,
-                                                     regularizer=reg)
-                    var['conv2_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
-                    # Do the calculations of this layer
-                    h = tf.nn.conv2d(h, var['conv2_w'], strides=[1, 2, 2, 1], padding='VALID')
-                    h = tf.nn.bias_add(h, var['conv2_b'])
-                    h = tf.nn.relu(h, name='activation')
-                with tf.variable_scope('conv3'):
-                    var['conv3_w'] = tf.get_variable('filter', (3, 3, 64, 64), initializer=self.init_func,
-                                                     regularizer=reg)
-                    var['conv3_b'] = tf.get_variable('biases', (64,), initializer=tf.constant_initializer(0.1))
-                    # Do the calculations of this layer
-                    h = tf.nn.conv2d(h, var['conv3_w'], strides=[1, 1, 1, 1], padding='VALID')
-                    h = tf.nn.bias_add(h, var['conv3_b'])
-                    h = tf.nn.relu(h, name='activation')
-                with tf.variable_scope('flatten'):
-                    # Reshape the output of the conv layers to be flat
-                    n_input = h.get_shape().as_list()[1] * h.get_shape().as_list()[2] * h.get_shape().as_list()[3]
-                    h = tf.reshape(h, [-1, n_input])
-                with tf.variable_scope('lin1'):
-                    var['lin1_w'] = tf.get_variable('weights', (n_input, 512), initializer=self.init_func,
-                                                    regularizer=reg)
-                    var['lin1_b'] = tf.get_variable('biases', (512,), initializer=tf.constant_initializer(0.1))
-                    h = tf.matmul(h, var['lin1_w']) + var['lin1_b']
-                    h = tf.nn.relu(h, name="activation")
+                h = self.get_encoder(x, var, self.encoder_type)
                 with tf.variable_scope('lin2'):
-                    var['lin2_w'] = tf.get_variable('weights', (512, self.num_actions), initializer=self.init_func,
-                                                    regularizer=reg)
+                    var['lin2_w'] = tf.get_variable('weights', (512, self.num_actions), initializer=self.init_func)
                     var['lin2_b'] = tf.get_variable('biases', (self.num_actions,),
                                                     initializer=tf.constant_initializer(0.1))
                     logits = tf.matmul(h, var['lin2_w']) + var['lin2_b']

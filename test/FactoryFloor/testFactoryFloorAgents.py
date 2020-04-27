@@ -46,11 +46,14 @@ class testFactoryFloorAgents(LoggedTestCase):
 
         randomagent = 'aiagents.single.RandomAgent.RandomAgent'
         for robotId in env.action_space.spaces.keys():
-            params = {'treeAgent':{'class': randomagent, 'id':robotId, 'parameters':{} },
+            mctsparams = {'treeAgent':{'class': randomagent, 'id':robotId, 'parameters':{} },
                       'rolloutAgent':{'class': randomagent, 'id':robotId, 'parameters':{} }} 
-            mctsAgents.append(MctsAgent(agentId=robotId, environment=env, parameters=params))
+            mctsparams['simulator'] = dict(parameters)
+            mctsparams['simulator']['fullname'] = "aienvs.FactoryFloor.FactoryFloor.FactoryFloor"
+            
+            mctsAgents.append(MctsAgent(robotId, env.action_space, env.observation_space , mctsparams))
 
-        complexAgent = BasicComplexAgent(mctsAgents)
+        complexAgent = BasicComplexAgent(mctsAgents, env.action_space, env.observation_space)
 
         episode = Episode(complexAgent, env, obs, render=True)
         episode.run()
@@ -64,9 +67,9 @@ class testFactoryFloorAgents(LoggedTestCase):
         env = FactoryFloor(parameters)
         randomAgents = []
         for robotId in env.action_space.spaces.keys():
-            randomAgents.append(RandomAgent(robotId, env))
+            randomAgents.append(RandomAgent(robotId, env.action_space, env.observation_space))
 
-        complexAgent = BasicComplexAgent(randomAgents)
+        complexAgent = BasicComplexAgent(randomAgents, env.action_space, env.observation_space)
         steps = 0
 
         Experiment(complexAgent, env, 1000, None, True).run()
@@ -97,8 +100,8 @@ class testFactoryFloorAgents(LoggedTestCase):
         env = FactoryFloor(parameters)
         randomAgents = []
         for robotId in env.action_space.spaces.keys():
-            randomAgents.append(FactoryFloorAgent(robotId, env, parameters))
-        complexAgent = BasicComplexAgent(randomAgents)
+            randomAgents.append(FactoryFloorAgent(robotId, env.action_space, env.observation_space, parameters))
+        complexAgent = BasicComplexAgent(randomAgents, env.action_space, env.observation_space)
         Experiment(complexAgent, env, 1000, None, True).run()       
 
 

@@ -1,7 +1,6 @@
 import tensorflow as tf
 import os
 
-
 class Q_function(object):
     """
     A super class that describes basic functionalities for a Q-network.
@@ -17,16 +16,10 @@ class Q_function(object):
         self.b_s = parameters["batch_size"]
         self.lr = parameters["learning_rate"]
         self.freeze_interval = parameters["freeze_interval"]
-        self.summary_frequency = parameters["summary_frequency"]
         self.gamma = parameters["gamma"]
-        self.weight_decay = 0.0
         self.init_func = self.initializer('xu', 0.0)
-        self.lra = 100000
-        self.ar = 1.0
-        # required when dividing position matrix into lanes
         self.f_height = parameters["frame_height"]
         self.f_width = parameters["frame_width"]
-        self.update_counter = max(parameters["iteration"],0)
         self.target_input = {}
         self.target_assign_op = {}
         with self.graph.as_default():
@@ -36,7 +29,6 @@ class Q_function(object):
             with tf.variable_scope('optimizer'):
                 self.learning_rate = tf.placeholder(tf.float32, name='learning_rate')
                 self.updates = tf.train.AdamOptimizer(self.learning_rate)
-            self.summaries = tf.summary.merge_all()
         self.sess = tf.Session(graph=self.graph)
 
     def initializer(self, initialization_type, init_param):
@@ -81,8 +73,6 @@ class Q_function(object):
         """
         with self.graph.as_default():
             with tf.name_scope('loss'):
-                # Store the mean reward (in a mini-batch) in a summary
-                tf.summary.scalar('mean_reward', tf.reduce_mean(rewards))
                 """
                 Calculate the target value(s)
                 """
@@ -97,27 +87,21 @@ class Q_function(object):
                     next_q_acted = tf.reduce_max(next_q_vals, axis=1)
                 # y = r + gamma * max Q(s_t+1)
                 target = tf.add_n([rewards, tf.scalar_mul(self.gamma, next_q_acted)], name='target_values')
-                tf.summary.scalar('target_value', tf.reduce_mean(target))
                 """
                 Retrieve the Q-value(s) of the given actions
                 """
                 # Q(s_t,a_t)
                 indices = tf.stack([tf.range(0,self.batch_size), actions], axis=-1)
                 q_acted = tf.gather_nd(q_vals, indices)
-                tf.summary.scalar('predicted_action_value', tf.reduce_mean(q_acted))
-                # This should be the same value as the reward more or less.
-                tf.summary.scalar('action-target_values', tf.reduce_mean(tf.subtract(q_acted, next_q_acted)))
                 """
                 Calculate the loss: squared TD-error
                 """
                 # This is the TD-error: y - Q(s_t,a_t)
                 diff = tf.subtract(target, q_acted, name='TD_errors')
                 # reduce-mean averages the negative and positive td-errors
-                tf.summary.scalar('TD_error', tf.reduce_mean(diff))
                 td_loss = tf.square(diff, name='squared_TD_errors')
                 loss = tf.reduce_mean(td_loss)
                 # Squared_TD_errors is the mean-squared-loss we want to minimize in training
-                tf.summary.scalar('Squared_TD_errors', loss)
 
         return loss, diff
 
@@ -218,6 +202,3 @@ class Q_function(object):
                     print("Failed! Initializing the network variables...")
                 else:
                     raise
-            summary_path = os.path.join("results", path)
-            self.train_writer = tf.summary.FileWriter(summary_path, self.sess.graph)
-            self.summaries = tf.summary.merge_all()
