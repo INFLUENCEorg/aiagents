@@ -77,7 +77,7 @@ class PPO(ACmodel):
         decay_beta = tf.train.polynomial_decay(self.parameters["beta"],
                                                self.step,
                                                self.parameters["max_steps"],
-                                               1e-2, power=1.0)
+                                               1.0e-2, power=1.0)
         # Loss function
         self.loss = self.policy_loss + self.parameters['c1']*self.value_loss - \
             decay_beta*self.entropy_bonus
@@ -163,9 +163,9 @@ class PPO(ACmodel):
                      self.action_holder: np.reshape(batch['actions'], -1),
                      self.mask_input: np.reshape(batch['masks'], -1)}
         if self.recurrent:
-            start_sequence_idx = np.arange(0, np.shape(batch['states_in'])[1],
+            start_sequence_idx = np.arange(0, np.shape(batch['states_in'])[0],
                                            self.parameters['seq_len'])
-            state_in = np.array(batch['states_in'])[:, start_sequence_idx, :, :]
+            state_in = np.array(batch['states_in'])[start_sequence_idx, :, :]
             c_in = np.reshape(state_in[:, :, 0, :],
                               [-1, self.parameters['num_rec_units']])
             h_in = np.reshape(state_in[:, :, 1, :],
@@ -179,9 +179,9 @@ class PPO(ACmodel):
                                            self.parameters['inf_seq_len'])
             state_in = np.array(batch['inf_states_in'])[:,
                                                         start_sequence_idx, :, :]
-            c_in = np.reshape(state_in[:, :, 0, :],
+            c_in = np.reshape(state_in[:, 0, :],
                               [-1, self.parameters['inf_num_rec_units']])
-            h_in = np.reshape(state_in[:, :, 1, :],
+            h_in = np.reshape(state_in[:, 1, :],
                               [-1, self.parameters['inf_num_rec_units']])
             inf_state_in = (c_in, h_in)
             feed_dict[self.inf_state_in] = inf_state_in

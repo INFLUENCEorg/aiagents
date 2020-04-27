@@ -18,7 +18,7 @@ class PPOAgent(AtomicAgent):
         self._step_output = None
         self._action = [-1]
         self._parameters = parameters
-        self._num_actions = actionspace.spaces.get(agentId).n
+        self._num_actions = actionspace.n
         self._train_frequency = self._parameters['train_frequency']
         self._save_frequency = self._parameters['save_frequency']
         self._agentId = agentId
@@ -36,7 +36,6 @@ class PPOAgent(AtomicAgent):
                         "policy_loss": [],
                         "value_loss": []}
         tf.reset_default_graph()
-        self._num_actions = actionspace.spaces.get(agentId).n
         self._step = 0
         summary_path = 'summaries/' + self._parameters['name'] + '_' + \
                         self._parameters['algorithm']
@@ -59,9 +58,9 @@ class PPOAgent(AtomicAgent):
         # stacked_obs[0, :, :, 0] = frame
         # new_state[0, :, :, 1:] = prev_state[:, :, :, :-1]
         if self._parameters['obs_type'] == 'image':
-            obs = np.reshape(obs, (1, self._parameters['frame_height'],
-                                   self._parameters['frame_width'],
-                                   self._parameters['num_frames']))
+            obs = np.stack(np.split(obs,2))
+            obs = [np.swapaxes(obs, 0, 2)]
+
         else:
             obs = [obs]
         next_step_output = dict({"obs": obs, "reward": reward, "done": done,
