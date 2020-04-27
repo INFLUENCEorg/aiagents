@@ -89,7 +89,7 @@ class PPOAgent(AtomicAgent):
 
         self._action_output = self._get_action(self._step_output)
         self._increment_step()
-        self._action = self._action_output.get('action')[0]
+        self._action = self._action_output.get('action')
         return {self._agentId: self._action}
 
 
@@ -135,7 +135,7 @@ class PPOAgent(AtomicAgent):
             self._cumulative_rewards = 0
             self._episode_step = 0
         if self._parameters['recurrent'] or self._parameters['influence']:
-            if done:
+            if next_step_output['done']:
                 # reset worker's internal state
                 self._PPO.reset_state_in()
                 # NOTE: FIND OUT HOW TO RESTART THE RNN'S INTERNAL STATE
