@@ -69,8 +69,8 @@ class MctsAgent(AtomicAgent):
             rolloutAgentList = rolloutAgentDict['subAgentList']
             rolloutAgentList.append(parameters['rolloutAgent'])
             rolloutAgentDict['subAgentList'] = rolloutAgentList
-            self._rolloutAgent = createAgent(self._simulator, rolloutAgentDict)
-            self._otherAgents = createAgent(self._simulator, parameters['otherAgents'])
+            self._rolloutAgent = createAgent(self._simulator.action_space, self._simulator.observation_space, rolloutAgentDict)
+            self._otherAgents = createAgent(self._simulator.action_space, self._simulator.observation_space, parameters['otherAgents'])
         else:
             self._otherAgents = None
             self._rolloutAgent = createAgent(self._simulator.action_space, self._simulator.observation_space, parameters['rolloutAgent'])

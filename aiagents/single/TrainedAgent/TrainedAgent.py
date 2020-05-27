@@ -12,7 +12,7 @@ import logging
 #logger.setLevel(logging.DEBUG)
 
 class TrainedAgent(AtomicAgent):
-    def __init__(self, agentId, environment: FactoryFloor, parameters: dict): 
+    def __init__(self, agentId, action_space, observation_space, parameters: dict): 
         """
         TBA
         """
@@ -25,10 +25,10 @@ class TrainedAgent(AtomicAgent):
             backupClassDictionary["id"]=agentId
             backupClassDictionary["class"]=parameters["backupClass"]
             backupClassDictionary["parameters"]=parameters["backupClassParameters"]
-            self._subAgent = createAgent(environment, backupClassDictionary)
+            self._subAgent = createAgent(action_space, observation_space, backupClassDictionary)
             logging.error("Agent " + str(agentId) + " using backup agent")
 
-        super().__init__(agentId, environment, parameters)
+        super().__init__(agentId, action_space, observation_space, parameters)
        
     def step(self, observation: FactoryFloorState, reward=None, done=None):
         if self._subAgent is not None:
@@ -47,7 +47,7 @@ class TrainedAgent(AtomicAgent):
 
 
 class TabularAgent(AtomicAgent):
-    def __init__(self, agentId, environment: FactoryFloor, parameters: dict): 
+    def __init__(self, agentId, action_space, observation_space, parameters: dict): 
         """
         TBA
         """
@@ -68,9 +68,9 @@ class TabularAgent(AtomicAgent):
         backupClassDictionary["id"]=agentId
         backupClassDictionary["class"]=parameters["backupClass"]
         backupClassDictionary["parameters"]=parameters["backupClassParameters"]
-        self._subAgent = createAgent(environment, backupClassDictionary)
+        self._subAgent = createAgent(action_space, observation_space, backupClassDictionary)
 
-        super().__init__(agentId, environment, parameters)
+        super().__init__(agentId, action_space, observation_space, parameters)
 
         self.predicts=0
         self.noPredicts=0
