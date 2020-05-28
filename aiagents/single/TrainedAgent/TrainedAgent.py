@@ -26,7 +26,7 @@ class TrainedAgent(AtomicAgent):
             backupClassDictionary["class"]=parameters["backupClass"]
             backupClassDictionary["parameters"]=parameters["backupClassParameters"]
             self._subAgent = createAgent(action_space, observation_space, backupClassDictionary)
-            logging.error("Agent " + str(agentId) + " using backup agent")
+            logging.info("Agent " + str(agentId) + " using backup agent")
 
         super().__init__(agentId, action_space, observation_space, parameters)
        
