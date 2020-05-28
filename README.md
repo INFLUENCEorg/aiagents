@@ -2,18 +2,22 @@
 Repository for Influence project agents
 
 
-# Prepare aiagents for use
-To use this , you need to have aienvs installed. To install that, 
-* Start up your aiagents venv
-* import aienvs from the repo
-* run the aienvs/build.sh script.
+### Using the library ###
 
-After that, you can use aiagents
+To use the library, simply add the checkout directory to your PYTHONPATH.
+You can verify that it succeeded by typing 
+```
+import aiagents
+```
+in the python3 console.
+Among other dependencies, you will need to have aienvs installed, or on your PYTHONPATH
+https://github.com/INFLUENCEorg/aienvs
+No build is needed.
 
 
 ### Build the library ###
-To build the library, 
-* follow the steps in 'prepare aiagents for use'
+If you would like build the library, 
+* build aienvs first
 * go to the aiagents directory and execute 
 ```
 ./build.sh
