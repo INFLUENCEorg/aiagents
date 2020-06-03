@@ -23,7 +23,7 @@ class QAgentPack(QAgentComponent):
 
     # Override
     def getQ(self, state, action:dict) -> float:
-        return self._agent.getQ(state, self._packedspace.pack action)
+        return self._agent.getQ(state, self._packedspace.pack(action))
     
     # Override
     def getV(self, state):
