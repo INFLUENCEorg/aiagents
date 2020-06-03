@@ -1,24 +1,44 @@
-from aiagents.single.PPO.PPO import PPO
-from aiagents.single.PPO.buffer import Buffer
+import os
 import numpy as np
-from aiagents.single.AtomicAgent import AtomicAgent
-from aienvs.Environment import Env
 import logging
 import tensorflow as tf
-import os
+import copy
+from dict_recursive_update import recursive_update
+
 from gym.spaces import Dict
+
+from aiagents.single.PPO.PPO import PPO
+from aiagents.single.PPO.buffer import Buffer
+from aiagents.single.AtomicAgent import AtomicAgent
+
+from aienvs.Environment import Env
+from aienvs.gym.DecoratedSpace import DecoratedSpace
 
 
 class PPOAgent(AtomicAgent):
 
+    DEFAULT_PARAMETERS = {
+        # if obs_type is 'image', PPO works based on an input image.
+        # the parameters 'frame_height','frame_width',
+        # 'num_frames' are assumed to be set.
+        # if obs_type is not 'image' ....DOC...
+        'obs_type': 'image',
+        'frame_height':10,
+        'frame_width':10,
+        'num_frames':1
+    }
+
     def __init__(self, agentId, actionspace:Dict, observationspace, parameters:dict):
         AtomicAgent.__init__(self, agentId, actionspace, observationspace, parameters)
+        self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
+        self._parameters = recursive_update(self._parameters, parameters)
+        
         self._prev_state = None
         # TODO: change to self._step_output = dict({"obs": observation_space.sample(), "reward": None, "done": None, "prev_action": None})
         self._step_output = None
         self._action = [-1]
-        self._parameters = parameters
-        self._num_actions = actionspace.n
+        decoratedspace = DecoratedSpace.create(actionspace)
+        self._num_actions = decoratedspace.n
         self._train_frequency = self._parameters['train_frequency']
         self._save_frequency = self._parameters['save_frequency']
         self._agentId = agentId
@@ -58,7 +78,7 @@ class PPOAgent(AtomicAgent):
         # stacked_obs[0, :, :, 0] = frame
         # new_state[0, :, :, 1:] = prev_state[:, :, :, :-1]
         if self._parameters['obs_type'] == 'image':
-            obs = np.stack(np.split(obs,2))
+            obs = np.stack(np.split(obs, 2))
             obs = [np.swapaxes(obs, 0, 2)]
 
         else:

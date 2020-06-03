@@ -60,7 +60,7 @@ class testSumoGymAdapter(LoggedTestCase):
         for intersectionId in env.action_space.spaces.keys():
             PPOAgents.append(PPOAgent(intersectionId, env.action_space, env.observation_space, parameters))
 
-        complexAgent = BasicComplexAgent(PPOAgents)
+        complexAgent = BasicComplexAgent(PPOAgents, env.action_space, env.observation_space)
         experiment = Experiment(complexAgent, env, parameters['max_steps'])
         experiment.run()
 
