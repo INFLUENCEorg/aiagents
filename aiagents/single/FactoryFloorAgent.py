@@ -37,26 +37,32 @@ class FactoryFloorAgent(AtomicAgent):
                           (-1, 0):self._ACTIONS.get("LEFT"),
                           (1, 0):self._ACTIONS.get("RIGHT")
                          }
-
+    
+    def getPathDict(self, state:FactoryFloorState):
+        """
+        @return pathdict with all connected paths on the map
+        """
+        if self._graph == None:
+            self._graph = FactoryGraph(state.getMap())
+            self._pathDict = dict(networkx.all_pairs_dijkstra_path(self._graph))
+        return self._pathDict
+    
     def step(self, state: FactoryFloorState, reward=None, done=None) -> Dict:
         # we can exit early
         if not state.tasks:
             return {self._agentId: self._ACTIONS.get("ACT")}
-
-        if self._graph == None:
-            self._graph = FactoryGraph(state.getMap())
-            self.pathDict = dict(networkx.all_pairs_dijkstra_path(self._graph))
+        self.getPathDict(state)
 
         robotpos = self._getCurrentPosition(state)
         socialOrder = self._computeSocialOrder(state, robotpos)
 
-        positionEvaluation = evaluateAllPositions(state, robotpos, self.pathDict)
+        positionEvaluation = evaluateAllPositions(state, robotpos, self._pathDict)
         # more robots than tasks our robot stays put
         if(len(positionEvaluation) <= socialOrder):
             return {self._agentId: self._ACTIONS.get("ACT")}
 
         positionToReach = setTargetPosition(positionEvaluation, socialOrder)
-        path = getPath(robotpos, positionToReach, self.pathDict)
+        path = getPath(robotpos, positionToReach, self._pathDict)
         action = self._getAction(path)
 
         logging.debug(action)

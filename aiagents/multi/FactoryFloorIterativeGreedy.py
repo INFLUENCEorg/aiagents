@@ -24,7 +24,7 @@ class FactoryFloorIterativeGreedy(ComplexAgent):
         """
         """
         # create a dictionary evaluating robot-action pairs
-        pathDict = self._agentSubcomponents[0].pathDict
+        pathDict = self._agentSubcomponents[0].getPathDict(state)
         evaluationDict = {}
         for robotId in self._ffAgentDict.keys():
             robotpos = state.robots[robotId].getPosition()
@@ -39,14 +39,16 @@ class FactoryFloorIterativeGreedy(ComplexAgent):
         # all agents by default assumed to follow no path, unless later specified
         for ffAgentId, ffAgent in self._ffAgentDict.items():
             stayInPlacePath = [str(state.robots[ffAgentId].getPosition())]
-            action = ffAgent.getAction(stayInPlacePath)
+            # HACK this is using hidden internal code from other class
+            action = ffAgent._getAction(stayInPlacePath)
             actions.update(action)
 
         while len(sortedRobotPosEval) > 0:
             bestRobot = sortedRobotPosEval[0][0][0]
             correspondingPosition = sortedRobotPosEval[0][0][1]
             robotPath = getPath(state.robots[bestRobot].getPosition(), correspondingPosition, pathDict)
-            action = self._ffAgentDict[bestRobot].getAction(robotPath)
+            # HACK this is using hidden internal code from other class
+            action = self._ffAgentDict[bestRobot]._getAction(robotPath)
             actions.update(action)
             
             newPosEval = [] 
