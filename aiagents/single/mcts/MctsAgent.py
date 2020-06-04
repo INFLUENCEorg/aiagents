@@ -53,7 +53,7 @@ class MctsAgent(AtomicAgent):
             self._limitType = 'iterations'
         
         # start the simulator environment
-        envparams = parameters['simulator']
+        envparams = self._parameters['simulator']
         e = EnvironmentFactory.createEnvironment(envparams['fullname'], envparams)
         self._simulator = ModifiedGymEnv(e, DecoratedSpace.create(copy.deepcopy(e.action_space)))
 

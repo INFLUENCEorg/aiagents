@@ -4,6 +4,7 @@ aliases:
   - &RandomAgent aiagents.single.RandomAgent.RandomAgent
   - &FactoryFloorAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
   - &FactoryFloorIterativeGreedy aiagents.multi.FactoryFloorIterativeGreedy.FactoryFloorIterativeGreedy
+  - &FactoryFloorEnv aienvs.FactoryFloor.FactoryFloor.FactoryFloor
 
 config:
   - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
@@ -23,6 +24,8 @@ parameters:
           - class: *RobotAgent
             id: "robot1"
             parameters:
+              simulator:
+                fullname: *FactoryFloorEnv
               treeAgent:
                 class: *RandomAgent
                 id: "robot1"
@@ -50,6 +53,8 @@ parameters:
           - class: *RobotAgent
             id: "robot2"
             parameters:
+              simulator:
+                fullname: *FactoryFloorEnv
               treeAgent:
                 class: *RandomAgent
                 id: "robot2"
@@ -77,6 +82,8 @@ parameters:
           - class: *RobotAgent
             id: "robot3"
             parameters:
+              simulator:
+                fullname: *FactoryFloorEnv
               treeAgent:
                 class: *RandomAgent
                 id: "robot3"
