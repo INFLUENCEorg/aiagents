@@ -3,6 +3,7 @@ aliases:
   - &MctsAgent aiagents.single.mcts.MctsAgent.MctsAgent
   - &RandomAgent aiagents.single.RandomAgent.RandomAgent
   - &FactoryFloorAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+  - &FactoryFloorEnv aienvs.FactoryFloor.FactoryFloor.FactoryFloor
 
 config:
   - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
@@ -20,16 +21,26 @@ parameters:
           - class: *RobotAgent
             id: "robots"
             parameters:
+              simulator:
+                fullname: *FactoryFloorEnv
+                robots: [{"id": "robot2", "pos":"random"}, {"id": "robot1", "pos": "random"}, {"id": "robot3", "pos": "random"}]
               treeAgent:
                 class: *RandomAgent
                 id: "robots"
-                parameters: {}
+                parameters: 
+                  simulator:
+                    fullname: *FactoryFloorEnv
+                    robots: [{"id": "robot2", "pos":"random"}, {"id": "robot1", "pos": "random"}, {"id": "robot3", "pos": "random"}]
               rolloutAgent:
                 class: *RandomAgent
                 id: "robots"
-                parameters: {}
+                parameters: 
+                  simulator:
+                    fullname: *FactoryFloorEnv
+                    robots: [{"id": "robot2", "pos":"random"}, {"id": "robot1", "pos": "random"}, {"id": "robot3", "pos": "random"}]
               timeLimit: *timeLimit
               treeParameters: 
                   explorationConstant: *explorationConstant
                   samplingLimit: *samplingLimit
+
 

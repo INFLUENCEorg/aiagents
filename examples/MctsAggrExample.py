@@ -43,22 +43,22 @@ def main():
     print(agent_parameters)
 
     random.seed(env_parameters['seed'])
-    maxSteps=env_parameters['max_steps']
+    maxSteps = env_parameters['max_steps']
     baseEnv = FactoryFloor(env_parameters['environment'])
-    packedActionSpace = PackedSpace( baseEnv.action_space, {"robots":["robot1", "robot2", "robot3"]} )
+    packedActionSpace = PackedSpace(baseEnv.action_space, {"robots":["robot1", "robot2", "robot3"]})
     env = ModifiedGymEnv(baseEnv, packedActionSpace)
 
     logging.info("Starting example MCTS agent")
     logoutput = io.StringIO("episode output log")
 
     try:
-        logoutputpickle = open('./'+os.environ["SLURM_JOB_ID"] +'.pickle', 'wb')
+        logoutputpickle = open('./' + os.environ["SLURM_JOB_ID"] + '.pickle', 'wb')
     except KeyError:
         print("No SLURM_JOB_ID found")
         logoutputpickle = io.BytesIO()
 
     obs = env.reset()
-    complexAgent = createAgent(env, agent_parameters)
+    complexAgent = createAgent(env.action_space, env.observation_space, agent_parameters)
 
     experiment = Experiment(complexAgent, env, maxSteps, render=True)
     experiment.addListener(JsonLogger(logoutput))
