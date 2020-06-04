@@ -52,10 +52,10 @@ def createAgent(actionspace:Dict, observationspace, parameters:dict) -> AgentCom
         subAgentList = []
         for subAgentParameters in parameters['subAgentList']:
             subAgentList.append(createAgent(actionspace, observationspace, subAgentParameters))
-            try:
-                obj = klass(subAgentList, actionspace, observationspace, class_parameters)
-            except Exception as error:
-                raise ValueError(classname + " failed on __init__:") from error
+        try:
+            obj = klass(subAgentList, actionspace, observationspace, class_parameters)
+        except Exception as error:
+            raise ValueError(classname + " failed on __init__:") from error
     else:
         raise Exception("parameters " + str(parameters) + " does not contain key 'id' or 'subAgentList'")
 
