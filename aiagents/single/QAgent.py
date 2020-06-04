@@ -7,6 +7,7 @@ import random
 from aiagents.utils.Hashed import Hashed
 from aienvs.gym.DecoratedSpace import DecoratedSpace
 from gym.spaces import Dict
+import copy
 
 INITIAL_Q = 0
 
@@ -19,7 +20,7 @@ class QAgent(AtomicAgent, QAgentComponent):
     then next time step is called, therefore the Q lags behind one step.
     see https://en.wikipedia.org/wiki/Q-learning.
 
-    The Q learning algorithm has two parameters:
+    The Q learning algorithm has parameters:
     * alpha in [0,1] the learning rate. Bigger means that new rewards
         are having more effect on the Q, so that learning goes
         faster but becomes less stable
@@ -27,27 +28,30 @@ class QAgent(AtomicAgent, QAgentComponent):
        of the new state's Q is incorporated into the old state's Q
        and thus determines how quick future effects boil down
        to the current Q.
-
-    chooseAction implements a standard epsilon-greedy
+    * epsilon ......DOC... chooseAction implements a standard epsilon-greedy
     """
+    DEFAULT_PARAMETERS = {'alpha':0.1, 'gamma':1, 'epsilon': 0.1}
 
     def __init__(
-        self, 
-        switchId:str, 
-        actionspace:Dict=None, 
-        observationspace=None, 
-        parameters:dict={'alpha':0.1, 'gamma':1, 'epsilon': 0.1}
+        self,
+        switchId:str,
+        actionspace:Dict=None,
+        observationspace=None,
+        parameters:dict={}
     ):
-        super().__init__(switchId, actionspace, observationspace, parameters)
+        self._parameters = copy.deepcopy(self.DEFAULT_PARAMETERS)
+        self._parameters.update(parameters)
+        
+        super().__init__(switchId, actionspace, observationspace, self._parameters)
         # determine our action space, subset of env action_space
         self._lastAction = None
         self._lastState = None
-        self._alpha = parameters['alpha']
-        self._gamma = parameters['gamma']
-        self._epsilon = parameters['epsilon']
+        self._alpha = self._parameters['alpha']
+        self._gamma = self._parameters['gamma']
+        self._epsilon = self._parameters['epsilon']
         self._Q = {}  # Q[state][action]=Q value after _lastAction
         self._steps = 0
-        self._eval = False # in eval mode, the agent executes the greedy policy given by the q function
+        self._eval = False  # in eval mode, the agent executes the greedy policy given by the q function
         self._actionspace = DecoratedSpace.create(actionspace)
     
     def eval(self):
@@ -90,8 +94,8 @@ class QAgent(AtomicAgent, QAgentComponent):
         @return the current Q value for this state and action, or
         INITIAL_Q if no Q stored for this state,action
         """
-        if state in self._Q.keys():
-            if action in self._Q[state].keys():
+        if state in list(self._Q.keys()):
+            if action in list(self._Q[state].keys()):
                 return self._Q[state][action]
         return INITIAL_Q
 

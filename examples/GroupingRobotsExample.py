@@ -75,9 +75,9 @@ def learnEpisode(randomentity:str) -> QAgent:
     packedActionSpace = PackedSpace(basicEnv.action_space, \
                 {"random":[randomentity], "qlearn": qagententities})
     env = ModifiedGymEnv(basicEnv, packedActionSpace)
-    agent1 = RandomAgent("random", env)
-    agent2 = QAgent("qlearn", env, LEARN_PARAMS)
-    complexAgent = BasicComplexAgent([agent1, agent2])
+    agent1 = RandomAgent("random", env.action_space, env.observation_space)
+    agent2 = QAgent("qlearn", env.action_space, env.observation_space, LEARN_PARAMS)
+    complexAgent = BasicComplexAgent([agent1, agent2], env.action_space, env.observation_space)
     episode = Episode(complexAgent, env, None, False, 0)
     episode.run()
     
@@ -94,7 +94,7 @@ def runQCoordinator(qagent1, qagent2, qagent3):
     and should choose the best perceived joint action based on them..
     '''
     env = GroupingRobots(params)
-    qcoord = QCoordinator([qagent1, qagent2, qagent3], env)
+    qcoord = QCoordinator([qagent1, qagent2, qagent3], env.action_space, env.observation_space)
     episode = Episode(qcoord, env, None, False, 0)
     episode.run()
 
