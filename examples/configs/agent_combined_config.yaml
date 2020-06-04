@@ -19,25 +19,22 @@ parameters:
       parameters: {}
       subAgentList:
           - class: *RobotAgent
-            id: "robots"
+            id: "robot1"
             parameters:
               simulator:
                 fullname: *FactoryFloorEnv
-                robots: [{"id": "robot2", "pos":"random"}, {"id": "robot1", "pos": "random"}, {"id": "robot3", "pos": "random"}]
               treeAgent:
                 class: *RandomAgent
-                id: "robots"
+                id: "robot1"
                 parameters: 
                   simulator:
                     fullname: *FactoryFloorEnv
-                    robots: [{"id": "robot2", "pos":"random"}, {"id": "robot1", "pos": "random"}, {"id": "robot3", "pos": "random"}]
               rolloutAgent:
                 class: *RandomAgent
-                id: "robots"
+                id: "robot1"
                 parameters: 
                   simulator:
                     fullname: *FactoryFloorEnv
-                    robots: [{"id": "robot2", "pos":"random"}, {"id": "robot1", "pos": "random"}, {"id": "robot3", "pos": "random"}]
               timeLimit: *timeLimit
               treeParameters: 
                   explorationConstant: *explorationConstant

@@ -14,6 +14,7 @@ from aienvs.loggers.PickleLogger import PickleLogger
 import copy
 import sys
 import pickle
+from dict_recursive_update import recursive_update
 
 logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
@@ -38,6 +39,11 @@ def main():
 
     env_parameters = getParameters(env_filename)
     agent_parameters = getParameters(agent_filename)
+
+    # whao, you need to know exact contents of all files here..    
+    recursive_update(agent_parameters['subAgentList'][0]['parameters']['simulator'], env_parameters['environment'])
+    recursive_update(agent_parameters['subAgentList'][0]['parameters']['treeAgent']['parameters']['simulator'], env_parameters['environment'])
+    recursive_update(agent_parameters['subAgentList'][0]['parameters']['rolloutAgent']['parameters']['simulator'], env_parameters['environment'])
 
     print(env_parameters)
     print(agent_parameters)
