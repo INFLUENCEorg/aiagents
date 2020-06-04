@@ -66,8 +66,6 @@ def main():
 
     complexAgent = createAgent(env.action_space, env.observation_space, agent_parameters)
 
-    import pdb; pdb.set_trace()
-
     experiment = Experiment(complexAgent, env, maxSteps, render=False)
     experiment.addListener(JsonLogger(logoutput))
     experiment.addListener(PickleLogger(logoutputpickle))
