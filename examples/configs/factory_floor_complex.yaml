@@ -1,10 +1,25 @@
+aliases:
+  - &BasicComplexAgent aiagents.multi.BasicComplexAgent.BasicComplexAgent
+  - &MctsAgent aiagents.single.mcts.MctsAgent.MctsAgent
+  - &RandomAgent aiagents.single.RandomAgent.RandomAgent
+  - &FactoryFloorAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+
+config:
+  - &RobotAgent aiagents.single.mcts.MctsAgent.MctsAgent
+    #- &RobotAgent aiagents.single.FactoryFloorAgent.FactoryFloorAgent
+    # - &RobotAgent aiagents.single.RandomAgent.RandomAgent
+  - &timeLimit 6
+  - &explorationConstant 10
+  - &samplingLimit 20
+
+
 parameters:
     # Common hyperparameters
     seed: null
 
     environment:
         steps: 4
-        robots: [[0,0],[3,3]]  # initial robot positions
+        robots: [{'id':robot1,'pos':[0,0]},{'id':robot2,'pos':[3,3]}]  # initial robot positions
         tasks: [[1,0],[2,3]]  # initial task positions
         P_action_succeed: {'LEFT':1.0, 'RIGHT':1.0, 'ACT':1.0, 'UP':1.0, 'DOWN':1.0}
         P_task_appears: 0.0  # P(new task appears in step) 
@@ -15,8 +30,22 @@ parameters:
               '....',
               '..9.']
     agents:
-        iterationLimit: 500
-        #timeLimit: 30
-        treeParameters: 
-            explorationConstant: 10000
-            samplingLimit: 20
+      class: *BasicComplexAgent
+      parameters: {}
+      subAgentList:
+          - class: *BasicComplexAgent
+            id: "robots"
+            parameters:
+              treeAgent:
+                class: *RandomAgent
+                id: "robots"
+                parameters: {}
+              rolloutAgent:
+                class: *RandomAgent
+                id: "robots"
+                parameters: {}
+              timeLimit: *timeLimit
+              treeParameters: 
+                  explorationConstant: *explorationConstant
+                  samplingLimit: *samplingLimit
+
